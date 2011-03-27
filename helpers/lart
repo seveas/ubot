@@ -1,0 +1,38 @@
+#!/usr/bin/python
+
+from ubot.helper import UbotResponder, UbotCommander
+from ubot.rfc2812 import IrcString
+import os, random, shelve
+
+class LartResponder(UbotCommander):
+    helper_info = {
+        'name': 'Lart',
+        'description': 'Lart people in a channel',
+        'version': "1.0",
+        'url': 'http://ubot.seveas.net/helpers/lart',
+        'author_name': 'Dennis Kaarsemaker',
+        'author_nick': 'Seveas',
+        'author_network': 'Freenode/MAGNet',
+        'author_email': 'dennis@kaarsemaker.net',
+    }
+    commands = {
+        IrcString('lart'): 'lart',
+        IrcString('slander'): 'lart',
+        IrcString('pity'): 'lart',
+    }
+
+    def handle_options(self, opts):
+        super(LartResponder, self).handle_options(opts)
+        lartdb = self.conf.get(self.name, 'larts')
+        self.larts = open(lartdb).read().splitlines()
+
+    def lart(self, message, ltarget):
+        if not ltarget.strip() or ltarget == 'me' or 'self' in ltarget:
+            ltarget = message.nick
+        if self.nickname in ltarget or IrcString('Seveas') in ltarget:
+            ltarget = message.nick
+        if random.random() > 0.75 and IrcString('ubuntu/member/seveas') not in message.prefix:
+            ltarget = message.nick
+        message.reply(random.choice(self.larts).replace('$who', ltarget), action=True, slow=True)
+
+LartResponder.run()

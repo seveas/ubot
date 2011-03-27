@@ -1,0 +1,59 @@
+body {
+    margin: 0px;
+    border: 0px;
+    font-family: "Arial","Helvetica","Verdana","sans-serif";
+    font-size: 12px;
+}
+#footer {
+    position: fixed;
+    bottom: 0px;
+    width: 100%;
+    margin: 0px;
+    padding: 0px 0px 0px 80px;
+    border: 0px;
+    z-index: 1;
+}
+#footer dl, #footer dd, #footer dt {
+    display: inline;
+    font-size: 12px;
+    font-weight: normal;
+}
+#footer dd {
+    padding: 0px;
+    margin: 0px;
+}
+#footer dt {
+    color: #2E6E9E;
+}
+#robot {
+    position: fixed;
+    bottom: -70px;
+    left: 5px;
+    z-index: 2;
+}
+.ub-widget {
+    float: left;
+    width: 30%;
+    padding: 0.1em;
+    margin: 0.5em 1em;
+    display: block;
+}
+.ub-title {
+    text-align: center;
+}
+.input-normal {
+    color: black;
+}
+.input-hint {
+    color: #cccccc;
+}
+#control input, #control button {
+    width: 100%;
+}
+p {
+    margin: 0;
+    padding: 0;
+}
+.ui-accordion .ui-accordion-content {
+    padding: 0 1em;
+}

@@ -1,0 +1,13 @@
+<html>
+    <body>
+        Hello
+        <script type="text/javascript">
+
+function escape_selector(text) {
+    return text.replace(/([!"#$%&'()*+,.:;<=>?@\[\]^`{|}~\/\\])/g,'\\$1')
+}
+var name = '#seveas/';
+document.write(name, escape_selector(name));
+        </script>
+    </body>
+</html>

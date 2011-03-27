@@ -1,0 +1,70 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <link rel="stylesheet" type="text/css" href="{{ MEDIA_URL }}ubot/redmond/jquery-ui-1.8.11.custom.css" />
+    <link rel="stylesheet" type="text/css" href="{{ MEDIA_URL }}ubot/ubot.css" />
+    <script type="text/javascript" src="//ajax.googleapis.com/ajax/libs/jquery/1.5.1/jquery.min.js"></script>
+    <script type="text/javascript" src="//ajax.googleapis.com/ajax/libs/jqueryui/1.8.11/jquery-ui.min.js"></script>
+    <script type="text/javascript" src="{{ MEDIA_URL }}ubot/cookie.js"></script>
+    <script type="text/javascript" src="{{ MEDIA_URL }}ubot/ubot.js"></script>
+    <script type="text/javascript">
+        ubot.initialize('{{ UBOT_BOTNAME }}');
+    </script>
+    <title>Ubot control interface</title>
+  </head>
+  <body>
+    <div id="channels-widget"  class="ub-widget ui-widget ui-widget-content ui-helper-clearfix ui-corner-all">
+      <div class="ub-title ui-widget-header ui-corner-all">Channels</div>
+      <div id="channels">
+      </div>
+    </div>
+    <div id="control-widget"  class="ub-widget ui-widget ui-widget-content ui-helper-clearfix ui-corner-all">
+      <div class="ub-title ui-widget-header ui-corner-all">Control</div>
+      <div id="control">
+        <table width="100%">
+          <tr>
+            <td width="75%"><input type="text" id="join_channel_input" class="input-hint" value="#channel" /></td>
+            <td width="5%">&nbsp;</td>
+            <td width="20%"><button id="join_channel_button">Join</button></td>
+          </tr>
+          <tr>
+            <td width="75%"><input type="text" id="nick_input" class="input-hint" value="Nickname" /></td>
+            <td width="5%">&nbsp;</td>
+            <td width="20%"><button id="nick_button">Change</button></td>
+          </tr>
+          <tr>
+            <td width="75%">
+              <input type="text" id="to_input" class="input-hint" value="Recipient" />
+              <input type="text" id="say_input" class="input-hint" value="Message" >
+            </td>
+            <td width="5%">&nbsp;</td>
+            <td width="20%">
+              <button id="say_button">Say</button>
+            </td>
+          </tr>
+          <tr>
+            <td width="75%"><input type="text" id="quit_input" class="input-hint" value="Quit message" /></td>
+            <td width="5%">&nbsp;</td>
+            <td width="20%"><button id="quit_button">Quit</button></td>
+          </tr>
+        </table>
+      </div>
+    </div>
+    <div id="helpers-widget"  class="ub-widget ui-widget ui-widget-content ui-helper-clearfix ui-corner-all">
+      <div class="ub-title ui-widget-header ui-corner-all">Helpers</div>
+      <div id="helpers">
+      </div>
+    </div>
+    <img id="robot" src="{{ MEDIA_URL }}ubot/blue_robot.png" />
+    <div id="footer" class="ui-widget-header">
+      <dl>
+        <dt>Ubot version</dt>
+        <dd id="version">&nbsp;</dd>
+        <dt>Connected to</dt>
+        <dd id="connection_info">&nbsp;</dd>
+        <dt>Nickname</dt>
+        <dd id="nickname">&nbsp;</dd>
+      </dl>
+    </div>
+  </body>
+</html>

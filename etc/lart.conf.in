@@ -1,0 +1,11 @@
+[lart]
+prefix:   @
+larts:    @LOCALSTATEDIR@/ubot/larts
+channels: #seveas
+botname:  ubot
+
+[lart2]
+prefix:   %
+larts:    @LOCALSTATEDIR@/ubot/larts
+channels: #microbot
+botname:  ubot
