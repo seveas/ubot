@@ -150,18 +150,16 @@ class UbotResponder(UbotHelper):
     def handle_options(self, opts):
         super(UbotResponder, self).handle_options(opts)
         self.active_channels = self.conf.get(self.name, 'channels', '').split(',')
-        self.respond_to_private = self.name in self.channels or 'all' in self.channels
+        self.respond_to_all = 'all' in self.channels
+        self.respond_to_private = self.respond_to_all or (self.name in self.channels)
 
     def addressed(self, message):
         if not super(UbotResponder, self).addressed(message):
             return False
         if message.target == self.nickname:
-            if not self.respond_to_private:
-                return False
+            return self.respond_to_private
         else:
-            if 'all' not in self.active_channels and message.target not in self.active_channels:
-                return False
-        return True
+            return self.respond_to_all or (message.target in self.active_channels)
 
     def send(self, target, message, action=False, slow=False):
         if target.startswith('#'):

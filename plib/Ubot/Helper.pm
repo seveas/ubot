@@ -319,7 +319,7 @@ sub new {
 
 sub is_ctcp {
     my ($self) = @_;
-    return ($self->{command} eq 'PRIVMSG') && ($self->{params} =~ /^\x01.*\x01$/);
+    return ($self->{command} eq 'PRIVMSG') && ($self->{params}->[-1] =~ /^\x01.*\x01$/);
 }
 
 sub is_action {
