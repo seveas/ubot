@@ -1,0 +1,32 @@
+#!/usr/bin/ruby
+require 'ubot/helper'
+require 'open-uri'
+require 'nokogiri'
+
+class IsupCommander < Ubot::Commander
+    def initialize
+        super
+        @helper_info = {
+            'name' => 'isup',
+            'description' => 'Check whether a website is up',
+            'version' => '1.0',
+            'url' => 'http://ubot.seveas.net/helpers/lart',
+            'author_name' => 'Dennis Kaarsemaker',
+            'author_nick' => 'Seveas',
+            'author_network' => 'Freenode/MAGNet',
+            'author_email' => 'dennis@kaarsemaker.net',
+        }
+        @commands = {
+            'isup' => 'isup'
+        }
+    end
+    def isup(message, url)
+        doc = Nokogiri::HTML(open('http://isup.me/www.seveas.net'))
+        doc.at_css("p").content = ''
+        doc.at_css("center").content = ''
+        doc = doc.at_css("div#container").content.strip.gsub(/\s\s+/, ' ')
+        message.reply(doc)
+    end
+end
+
+IsupCommander.run()

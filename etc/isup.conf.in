@@ -1,0 +1,4 @@
+[isup]
+prefix   = @
+channels = #seveas
+botname  = ubot

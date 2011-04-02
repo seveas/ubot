@@ -13,6 +13,7 @@ fi
 prefix=$(dirname $(dirname "$me"))
 libdir="$prefix/lib"
 plibdir="$prefix/plib"
+rlibdir="$prefix/rlib"
 sysconfdir="$HOME/.config"
 sessionconf="$sysconfdir/ubot/session.conf"
 localstatedir=$HOME/.local/share
@@ -36,6 +37,11 @@ if [ -z "$PERL5LIB" ]; then
 else
     PERL5LIB="$plibdir:$PERL5LIB"
 fi
+if [ -z "$RUBYLIB" ]; then
+    RUBYLIB="$rlibdir"
+else
+    RUBYLIB="$rlibdir:$RUBYLIB"
+fi
 pid=$(pgrep -f $sessionconf)
 if [ -z "$pid" ]; then
     eval $(dbus-launch --config-file $sessionconf)
@@ -45,11 +51,12 @@ else
     DBUS_SESSION_BUS_ADDRESS=$address
 fi
 if [ $# != 0 ]; then
-    export PYTHONPATH PERL5LIB DBUS_SESSION_BUS_PID DBUS_SESSION_BUS_ADDRESS
+    export PYTHONPATH PERL5LIB RUBYLIB DBUS_SESSION_BUS_PID DBUS_SESSION_BUS_ADDRESS
     "$@"
 else
-    echo export PYTHONPATH="\"$PYTHONPATH\""
-    echo export PERL5LIB="\"$PERL5LIB\""
-    echo export DBUS_SESSION_BUS_PID="\"$DBUS_SESSION_BUS_PID\""
-    echo export DBUS_SESSION_BUS_ADDRESS="\"$DBUS_SESSION_BUS_ADDRESS\""
+    echo export PYTHONPATH=\"$PYTHONPATH\"
+    echo export PERL5LIB=\"$PERL5LIB\"
+    echo export RUBYLIB=\"$RUBYLIB\"
+    echo export DBUS_SESSION_BUS_PID=\"$DBUS_SESSION_BUS_PID\"
+    echo export DBUS_SESSION_BUS_ADDRESS=\"$DBUS_SESSION_BUS_ADDRESS\"
 fi

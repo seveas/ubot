@@ -10,3 +10,5 @@
 * Make run_from_source install datafiles
 * Make run_from_source create the media symlink
 * Port plugins
+* Port ircstring to ruby and use it
+* Find a way to do something similar in perl
