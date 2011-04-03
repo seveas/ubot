@@ -16,6 +16,8 @@ class Ubot(dbus.service.Object):
     def __init__(self, config):
         self.config = config
         self.ircconnection = None
+        dbus.SessionBus().add_signal_receiver(self.helper_exited, signal_name='NameOwnerChanged',
+                dbus_interface='org.freedesktop.DBus', bus_name='org.freedesktop.DBus', path='/org/freedesktop/DBus')
         self.busname = dbus.service.BusName("net.seveas.ubot." + config.busname, dbus.SessionBus())
         dbus.service.Object.__init__(self, dbus.SessionBus(), '/net/seveas/ubot/' + config.busname)
         data = {}
@@ -93,6 +95,10 @@ class Ubot(dbus.service.Object):
         elif '!' in msg:
             return msg[:msg.index('!')] == self.nick
         return msg == self.nick
+
+    def helper_exited(self, name, old, new):
+        if name in self.helpers and new == '':
+            self.helpers.pop(name)
 
     # Generic connectivity funcions
 
@@ -209,6 +215,16 @@ class Ubot(dbus.service.Object):
         self.server = server
         self.port = port
         self.connected = True
+
+    @dbus.service.method(dbus_interface='net.seveas.ubot',
+                         in_signature='so', out_signature='')
+    def register_helper(self, service, path):
+        self.helpers[service] = path
+
+    @dbus.service.method(dbus_interface='net.seveas.ubot',
+                         in_signature='', out_signature='aas')
+    def get_helpers(self):
+        return self.helpers.items()
 
     @dbus.service.method(dbus_interface='net.seveas.ubot',
                          in_signature='', out_signature='as')

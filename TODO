@@ -2,9 +2,6 @@
 * Login page and overview page
 * Document admin iface
 * Control helpers from the web
-* Bot tracks all helpers
-  - Helpers identify at startup and when they see the bot
-  - Bot tracks helpers (NameOwnerChange) and vice versa
 * Make run_from_source.sh be careful when overwriting existing files
 * More channel options (part, send message, nicks)
 * Make run_from_source install datafiles
