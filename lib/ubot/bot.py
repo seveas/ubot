@@ -438,6 +438,11 @@ class Ubot(dbus.service.Object):
     def handle_channelmodeis(self, msg):
         self.channels[msg.params[0]].mode = msg.params[1:]
 
+    def handle_mode(self, msg):
+        # Be lazy, don't manage modes but re-request them
+        if msg.params[0] in self.channels:
+            self.rawmsg('MODE', [msg.params[0]])
+
     def maybe_master(self):
         # Not synced, not master
         if not self.synced:

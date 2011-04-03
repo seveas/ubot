@@ -47,7 +47,7 @@ body {
 .input-hint {
     color: #cccccc;
 }
-#control input, #control button {
+#control input, #control button, #channels input, #channels button {
     width: 100%;
 }
 p {

@@ -3,9 +3,10 @@
 * Document admin iface
 * Control helpers from the web
 * Make run_from_source.sh be careful when overwriting existing files
-* More channel options (part, send message, nicks)
+* More channel options wrt nicks
 * Make run_from_source install datafiles
 * Make run_from_source create the media symlink
 * Port plugins
 * Port ircstring to ruby and use it
 * Find a way to do something similar in perl
+* User mode tracking (op, voice)
