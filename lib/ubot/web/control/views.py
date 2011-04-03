@@ -77,7 +77,7 @@ def control_method(meth):
 @user_passes_test(lambda user: user.has_perm('ubot_control'))
 def index(request):
     ctx = RequestContext(request, {'UBOT_BOTNAME': settings.UBOT_BOTNAME})
-    return render_to_response('ubot/index.html', context_instance=ctx)
+    return render_to_response('ubot/control/index.html', context_instance=ctx)
 
 @control_method
 def channels(request, bot):
