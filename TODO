@@ -1,7 +1,6 @@
 * Port old ubot documentation
 * Login page and overview page
 * Document admin iface
-* Control helpers from the web
 * Make run_from_source.sh be careful when overwriting existing files
 * More channel options wrt nicks
 * Make run_from_source install datafiles

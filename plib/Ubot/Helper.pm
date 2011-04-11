@@ -76,6 +76,7 @@ sub get_bot {
     $self->{bot} = Net::DBus->session
         ->get_service('net.seveas.ubot.' . $self->{botname})
         ->get_object('/net/seveas/ubot/' . $self->{botname});
+    $self->{bot}->register_helper($self->{busname}, $self->{busobjname});
     $self->{bot}->connect_to_signal('message_received', sub { $self->message_received(@_) });
     $self->{bot}->connect_to_signal('message_sent', sub { $self->message_sent(@_) });
     $self->{bot}->connect_to_signal('sync_complete', sub { $self->sync_complete });
@@ -175,10 +176,10 @@ sub quit {
     $self->{reactor}->shutdown;
 }
 
-dbus_method("info", [], ["dict", "string", "string"]);
+dbus_method("get_info", [], [["dict", "string", "string"]]);
 sub get_info {
     my ($self) = @_;
-    return $self->{info};
+    return $self->{helper_info};
 }
 
 sub run {

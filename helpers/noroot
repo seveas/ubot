@@ -9,20 +9,25 @@ use warnings;
 use Ubot::Helper;
 use base 'Ubot::Responder';
 
-my $helper_info = {
-    name => 'Lart',
-    description => 'Lart people in a channel',
-    version => "1.0",
-    url => 'http://ubot.seveas.net/helpers/lart',
-    author_name => 'Dennis Kaarsemaker',
-    author_nick => 'Seveas',
-    author_network => 'Freenode/MAGNet',
-    author_email => 'dennis@kaarsemaker.net',
-};
+sub new {
+    my $class = shift;
+    my $self = $class->SUPER::new(@_);
+    $self->{helper_info} = {
+        name => 'Lart',
+        description => 'Lart people in a channel',
+        version => "1.0",
+        url => 'http://ubot.seveas.net/helpers/lart',
+        author_name => 'Dennis Kaarsemaker',
+        author_nick => 'Seveas',
+        author_network => 'Freenode/MAGNet',
+       author_email => 'dennis@kaarsemaker.net',
+    };
+    return $self;
+}
 
 sub in_join {
     my ($self, $message) = @_;
-    if($self->addressed($message) && ($message->{nick} eq 'root___' || $message->{ident} =~ /~?root/)) {
+    if($self->addressed($message) && ($message->{nick} eq 'root' || $message->{ident} =~ /~?root/)) {
         $message->reply("You should not use IRC as root, this is a security risk", {private => 1})
     }
 }

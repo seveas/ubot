@@ -3,11 +3,15 @@ from django.contrib.auth.decorators import user_passes_test
 from django.http import HttpResponse, HttpResponseForbidden, HttpResponseBadRequest, HttpResponseServerError
 from django.shortcuts import render_to_response
 from django.template import RequestContext
+import ConfigParser
 import dbus
 import functools
 import os
 import simplejson
 import ubot.util
+
+class HttpResponseUnavailable(HttpResponse):
+    status_code = 503
 
 class JsonResponse(HttpResponse):
     def __init__(self, content, *args, **kwargs):
@@ -25,14 +29,15 @@ def control_method(meth):
         except:
             return HttpResponseServerError("The dbus daemon at %s is not running or not accessible. Start dbus and retry." % os.environ['DBUS_SESSION_BUS_ADDRESS'])
 
-        bus = dbus.SessionBus().get_object('org.freedesktop.DBus', '/org/freedesktop/DBus')
-        try:
-            bus.GetNameOwner('net.seveas.ubot.' + kwargs['bot'])
-        except dbus.DBusException, e:
-            if e.get_dbus_name() == 'org.freedesktop.DBus.Error.NameHasNoOwner':
-                return HttpResponseServerError("The bot named %s is not running. Start the bot and retry." % kwargs['bot'])
-            else:
-                raise
+        if 'bot' in kwargs:
+            bus = dbus.SessionBus().get_object('org.freedesktop.DBus', '/org/freedesktop/DBus')
+            try:
+                bus.GetNameOwner('net.seveas.ubot.' + kwargs['bot'])
+            except dbus.DBusException, e:
+                if e.get_dbus_name() == 'org.freedesktop.DBus.Error.NameHasNoOwner':
+                    return HttpResponseUnavailable("The bot named %s is not running. Start the bot and retry." % kwargs['bot'])
+                else:
+                    raise
 
         # Replace 'channel' with a channel object
         if 'channel' in kwargs:
@@ -57,7 +62,7 @@ def control_method(meth):
         else:
             defaults = {}
         for var in varnames:
-            if var in ('request', 'bot'):
+            if var in ('request', 'bot', 'helper', 'botname'):
                 continue
             if var == 'channel' and code.co_name != 'join':
                 continue
@@ -78,6 +83,15 @@ def control_method(meth):
 def index(request):
     ctx = RequestContext(request, {'UBOT_BOTNAME': settings.UBOT_BOTNAME})
     return render_to_response('ubot/control/index.html', context_instance=ctx)
+
+@control_method
+def start_bot(request, botname):
+    try:
+        bus = dbus.SessionBus().get_object('org.freedesktop.DBus', '/org/freedesktop/DBus')
+        bus.StartServiceByName('net.seveas.ubot.' + settings.UBOT_BOTNAME, dbus.types.UInt32(0))
+    except:
+        # Ignore errors, retries will be attempted
+        pass
 
 @control_method
 def channels(request, bot):
@@ -110,6 +124,42 @@ def say(request, bot, target, message):
 @control_method
 def raw(request, bot):
     pass
+
+blacklisted_names = ('org.freedesktop.DBus','net.seveas.ubot.' + settings.UBOT_BOTNAME)
+@control_method
+def helpers(request, bot):
+    bus = dbus.SessionBus().get_object('org.freedesktop.DBus','/org/freedesktop/DBus')
+    helpers = dict([(x, False) for x in bus.ListActivatableNames() if x not in blacklisted_names])
+    helpers.update(dict(bot.get_helpers()))
+    return {'helpers': sorted(helpers.items())}
+
+@control_method
+def stop_helper(request, bot, helper):
+    helpers = dict(bot.get_helpers())
+    if helper not in helpers:
+        raise ValueError("No such helper")
+    helper = dbus.SessionBus().get_object(helper, helpers[helper])
+    helper.quit(dbus_interface='net.seveas.ubot.helper')
+
+@control_method
+def start_helper(request, bot, helper):
+    bus = dbus.SessionBus().get_object('org.freedesktop.DBus','/org/freedesktop/DBus')
+    helpers = dict([(x, False) for x in bus.ListActivatableNames() if x not in blacklisted_names])
+    helpers.update(dict(bot.get_helpers()))
+    if helpers.get(helper, None):
+        raise ValueError("Helper %s already running" % helper)
+    if helper not in helpers:
+        raise ValueError("Helper %s cannot be autostarted" % helper)
+    bus.StartServiceByName(helper, dbus.types.UInt32(0))
+
+@control_method
+def helper_info(request, bot, helper):
+    helpers = dict(bot.get_helpers())
+    if helper not in helpers:
+        return {'info': {}}
+    helper = dbus.SessionBus().get_object(helper, helpers[helper])
+    info = helper.get_info(dbus_interface='net.seveas.ubot.helper')
+    return {'info': info}
 
 @control_method
 def channel_do(request, bot, channel, message):

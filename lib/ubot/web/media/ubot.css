@@ -57,3 +57,19 @@ p {
 .ui-accordion .ui-accordion-content {
     padding: 0 1em;
 }
+
+.sliderswitch_container {
+    position: relative;
+    overflow: hidden;
+    height: 14px;
+    width: 47px;
+    cursor: pointer;
+}
+.sliderswitch {
+    height: 14px;
+    width: 47px;
+    background-image: url('switch.png');
+    background-repeat: none;
+    background-position: 0px;
+    cursor: pointer;
+}

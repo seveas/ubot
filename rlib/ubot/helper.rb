@@ -68,6 +68,7 @@ module Ubot
             @bot = @bots.object('/net/seveas/ubot/' + @botname)
             @bot.introspect
             @bot.default_iface = 'net.seveas.ubot'
+            @bot.register_helper(@busname, @busobjname)
 
             @bot.on_signal('message_sent') do |command,params|
                 message_sent(command, params)
@@ -188,7 +189,7 @@ module Ubot
                 @runloop.quit
             end
             dbus_method :get_info, "out info:a{ss}" do
-                @helper_info
+                [@helper_info]
             end
         end
 
