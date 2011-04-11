@@ -11,7 +11,7 @@ body {
     margin: 0px;
     padding: 0px 0px 0px 80px;
     border: 0px;
-    z-index: 1;
+    z-index: 5;
 }
 #footer dl, #footer dd, #footer dt {
     display: inline;
@@ -29,7 +29,7 @@ body {
     position: fixed;
     bottom: -70px;
     left: 5px;
-    z-index: 2;
+    z-index: 6;
 }
 .ub-widget {
     float: left;

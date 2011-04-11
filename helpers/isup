@@ -10,7 +10,7 @@ class IsupCommander < Ubot::Commander
             'name' => 'isup',
             'description' => 'Check whether a website is up',
             'version' => '1.0',
-            'url' => 'http://ubot.seveas.net/helpers/lart',
+            'url' => 'http://ubot.seveas.net/helpers/isup',
             'author_name' => 'Dennis Kaarsemaker',
             'author_nick' => 'Seveas',
             'author_network' => 'Freenode/MAGNet',
