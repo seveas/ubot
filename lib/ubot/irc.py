@@ -4,13 +4,13 @@ import chardet, gobject, logging, signal, socket, ssl, string, sys, time, urlpar
 def try_connect(servers):
     logger = logging.getLogger('ubot.irc')
     for server in servers:
-        ssl = False
+        secure = False
         if '://' in server:
             parts = urlparse.urlparse(server)
             if parts.scheme not in ['irc', 'ircs']:
                 logger.error("Failed: unknown protocol %s" % (parts.scheme,))
                 continue
-            ssl = parts.scheme == 'ircs'
+            secure = parts.scheme == 'ircs'
             server = parts.netloc
         if ':' in server:
             server, port = server.split(':')
@@ -31,7 +31,7 @@ def try_connect(servers):
             sock.settimeout(10)
             sock.connect(sockaddr)
             sock.settimeout(None)
-            if ssl:
+            if secure:
                 try:
                     sock = ssl.wrap_socket(sock)
                 except ssl.error, e:
