@@ -31,14 +31,15 @@ def try_connect(servers):
             sock.settimeout(10)
             sock.connect(sockaddr)
             sock.settimeout(None)
+            if ssl:
+                try:
+                    sock = ssl.wrap_socket(sock)
+                except ssl.error, e:
+                    log.error("Failed: (%d) %s" % (e[0], e[1]))
+                    continue
             return sock, server, port
         except socket.error, e:
             logger.error("Failed: (%d) %s" % (e[0], e[1]))
-        if ssl:
-            try:
-                sock = ssl.wrap_socket(sock)
-            except ssl.error, e:
-                log.error("Failed: (%d) %s" % (e[0], e[1]))
     return (None, None, None)
 
 class IrcConnection(object):
