@@ -81,7 +81,7 @@ sub get_bot {
     $self->{bot}->connect_to_signal('message_sent', sub { $self->message_sent(@_) });
     $self->{bot}->connect_to_signal('sync_complete', sub { $self->sync_complete });
     $self->{bot}->connect_to_signal('master_change', sub { $self->{master} = $_[0] });
-    $self->{bot}->connect_to_signal('exiting', sub { $self->{reactor}->shutdown; });
+    $self->{bot}->connect_to_signal('exiting', sub { $self->quit; });
     my $info = $self->{bot}->get_info();
     $self->{synced} = $info->{synced};
     $self->{master} = $info->{master};
@@ -174,6 +174,8 @@ dbus_method("quit", [], []);
 sub quit {
     my ($self) = @_;
     $self->{reactor}->shutdown;
+    # Send a GetId to to work around a bug in the reactor
+    Net::DBus->session->get_service('org.freedesktop.DBus')->get_object('/org/freedesktop/DBus')->GetId();
 }
 
 dbus_method("get_info", [], [["dict", "string", "string"]]);
