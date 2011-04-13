@@ -1,6 +1,7 @@
 #!/bin/bash
 #
-# Generate *.service and session.conf with absolute paths
+# Install the base config files in ~/.config and data in ~/.local/share,
+# but only if the files don't exist
 
 me="$0"
 cwd=$(pwd)
@@ -22,10 +23,28 @@ mkdir -p "$sysconfdir/ubot/services"
 for conf in $(find "$prefix/etc" -type f -name '*.in'); do
     realconf="$sysconfdir/ubot${conf#$prefix/etc}"
     realconf="${realconf%.in}"
-    sed -e "s!@PREFIX@!$prefix!" \
-        -e "s!@LOCALSTATEDIR@!$localstatedir!" \
-        -e "s!@SYSCONFDIR@!$sysconfdir!" < "$conf" > "$realconf"
+    writeconf=no
+    if [ ! -e "$realconf" ]; then
+        writeconf=yes
+    else
+        oldmd5=$(md5sum "$realconf" | cut -d' ' -f1)
+        newmd5=$(sed -e "s!@PREFIX@!$prefix!" \
+                     -e "s!@LOCALSTATEDIR@!$localstatedir!" \
+                     -e "s!@SYSCONFDIR@!$sysconfdir!" < "$conf" | md5sum | cut -d' ' -f1)
+        if [ $oldmd5 = $newmd5 ]; then
+            writeconf=yes
+        fi
+    fi
+    if [ $writeconf = "yes" ]; then
+        sed -e "s!@PREFIX@!$prefix!" \
+            -e "s!@LOCALSTATEDIR@!$localstatedir!" \
+            -e "s!@SYSCONFDIR@!$sysconfdir!" < "$conf" > "$realconf"
+    else
+        echo "Not overwriting $realconf"
+    fi
 done
+
+if [ ! -e "$localstatedir/larts" ]; then cp "$prefix/data/lart/larts" "$localstatedir"; fi
 
 if [ -z "$PYTHONPATH" ]; then
     PYTHONPATH="$libdir"
@@ -42,6 +61,9 @@ if [ -z "$RUBYLIB" ]; then
 else
     RUBYLIB="$rlibdir:$RUBYLIB"
 fi
+
+export PYTHONPATH PERL5LIB RUBYLIB DBUS_SESSION_BUS_PID DBUS_SESSION_BUS_ADDRESS
+
 pid=$(pgrep -f $sessionconf)
 if [ -z "$pid" ]; then
     eval $(dbus-launch --config-file $sessionconf)
@@ -51,7 +73,6 @@ else
     DBUS_SESSION_BUS_ADDRESS=$address
 fi
 if [ $# != 0 ]; then
-    export PYTHONPATH PERL5LIB RUBYLIB DBUS_SESSION_BUS_PID DBUS_SESSION_BUS_ADDRESS
     "$@"
 else
     echo export PYTHONPATH=\"$PYTHONPATH\"

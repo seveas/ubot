@@ -1,11 +1,9 @@
+* More channel options wrt nicks
 * Port old ubot documentation
 * Login page and overview page
 * Document admin iface
-* Make run_from_source.sh be careful when overwriting existing files
-* More channel options wrt nicks
-* Make run_from_source install datafiles
-* Make run_from_source create the media symlink
 * Port plugins
 * Port ircstring to ruby and use it
 * Find a way to do something similar in perl
 * User mode tracking (op, voice)
+* Some way of seeing/editing helper config
