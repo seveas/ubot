@@ -1,9 +1,17 @@
 from ubot.rfc2812 import has_target, nargs_out, nargs_in, replies, IrcString
-import chardet, gobject, logging, signal, socket, string, sys, time
+import chardet, gobject, logging, signal, socket, ssl, string, sys, time, urlparse
 
 def try_connect(servers):
     logger = logging.getLogger('ubot.irc')
     for server in servers:
+        ssl = False
+        if '://' in server:
+            parts = urlparse.urlparse(server)
+            if parts.scheme not in ['irc', 'ircs']:
+                logger.error("Failed: unknown protocol %s" % (parts.scheme,))
+                continue
+            ssl = parts.scheme == 'ircs'
+            server = parts.netloc
         if ':' in server:
             server, port = server.split(':')
             try:
@@ -11,7 +19,7 @@ def try_connect(servers):
             except:
                 pass
         else:
-            server, port = server, 6667
+            server, port = server, [6667, 6697][int(ssl)]
         logger.info("Trying to connect to %s port %d" % (server, port))
         try:
             family, socktype, proto, canonname, sockaddr = socket.getaddrinfo(server, port, socket.AF_INET, socket.SOCK_STREAM)[0]
@@ -26,6 +34,11 @@ def try_connect(servers):
             return sock, server, port
         except socket.error, e:
             logger.error("Failed: (%d) %s" % (e[0], e[1]))
+        if ssl:
+            try:
+                sock = ssl.wrap_socket(sock)
+            except ssl.error, e:
+                log.error("Failed: (%d) %s" % (e[0], e[1]))
     return (None, None, None)
 
 class IrcConnection(object):
