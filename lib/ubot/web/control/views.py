@@ -156,10 +156,10 @@ def start_helper(request, bot, helper):
 def helper_info(request, bot, helper):
     helpers = dict(bot.get_helpers())
     if helper not in helpers:
-        return {'info': {}}
+        return {'running': False, 'info': {}}
     helper = dbus.SessionBus().get_object(helper, helpers[helper])
     info = helper.get_info(dbus_interface='net.seveas.ubot.helper')
-    return {'info': info}
+    return {'running': True, 'info': info}
 
 @control_method
 def channel_do(request, bot, channel, message):
