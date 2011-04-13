@@ -19,7 +19,7 @@ def try_connect(servers):
             except:
                 pass
         else:
-            server, port = server, [6667, 6697][int(ssl)]
+            server, port = server, [6667, 6697][int(secure)]
         logger.info("Trying to connect to %s port %d" % (server, port))
         try:
             family, socktype, proto, canonname, sockaddr = socket.getaddrinfo(server, port, socket.AF_INET, socket.SOCK_STREAM)[0]
