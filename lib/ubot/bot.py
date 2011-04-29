@@ -39,6 +39,9 @@ class Ubot(dbus.service.Object):
         self.logger = logging.getLogger('ubot')
         self.msglogger = logging.getLogger('ubot.messages')
 
+        # Add our exception hook
+        sys.excepthook = self.excepthook
+
     def clear_data(self):
         """Clear internal data, used when diconnected"""
         if hasattr(self, 'channels'):
@@ -479,6 +482,18 @@ class Ubot(dbus.service.Object):
             self.master_change(True)
         else:
             self.master_change(False)
+
+    def excepthook(self, type, value, tb):
+        import traceback
+        tb = [x.strip() for x in traceback.format_exception(type, value, tb)]
+        for line in tb:
+            self.logger.error(tb)
+        if self.config.controlchan in self.channels:
+            self.channels[self.config.controlchan].say("Exception occured, exiting")
+            for line in tb:
+                self.channels[self.config.controlchan].say(line)
+        time.sleep(5)
+        self.quit("Oh no, not again")
 
 # Many thanks to Douglas Adams for writing the hitchhikers guide
 FAILOVER_HELLO = ("Ah, hello, Number Two",
