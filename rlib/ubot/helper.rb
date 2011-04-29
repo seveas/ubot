@@ -128,7 +128,7 @@ module Ubot
         end
 
         def _in_part(message)
-            if message.prefix.start_with?(@nick + '!')
+            if message.prefix.start_with?(@nickname + '!')
                 @channels.delete(message.target)
             end
         end
@@ -142,7 +142,7 @@ module Ubot
         end
 
         def _in_nick(message)
-            if message.prefix.start_with?(@nick + '!')
+            if message.prefix.start_with?(@nickname + '!')
                 @nickname = message.params[0]
             end
         end
