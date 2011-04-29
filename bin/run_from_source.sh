@@ -39,8 +39,6 @@ for conf in $(find "$prefix/etc" -type f -name '*.in'); do
         sed -e "s!@PREFIX@!$prefix!" \
             -e "s!@LOCALSTATEDIR@!$localstatedir!" \
             -e "s!@SYSCONFDIR@!$sysconfdir!" < "$conf" > "$realconf"
-    else
-        echo "Not overwriting $realconf"
     fi
 done
 

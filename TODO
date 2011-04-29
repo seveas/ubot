@@ -7,3 +7,9 @@
 * Port ircstring to ruby and use it
 * Find a way to do something similar in perl
 * Some way of seeing/editing helper config
+* Maybe special bus messages for mode changes, given their complexity
+* A stay dead feature if more than one exception occurs in N minutes
+* Proper permissions for controlling the bot
+* Bot interface should be net.seveas.ubot.bot
+* message_sent should have target
+* Rename connection_made to connection_established

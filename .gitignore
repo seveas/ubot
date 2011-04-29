@@ -1,0 +1,7 @@
+*.pyc
+*.o
+*.hi
+helpers/calc
+.*.sw?
+_build
+.bzr*

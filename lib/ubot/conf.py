@@ -12,7 +12,7 @@ class UbotConfig(object):
         self.controlchan = None
         self.ident       = ubot.irc.IrcString('ubot')
         self.realname    = ubot.irc.IrcString('Ubot')
-        self.busname     = os.path.basename(os.path.dirname(configfile))
+        self.busname     = 'ubot'
         self.parse_config(configfile)
         self.datadir     = os.path.expanduser(os.path.join('~','.local','share','ubot'))
         self.datafile    = os.path.join(self.datadir, self.busname + '.dat')

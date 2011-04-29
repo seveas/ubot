@@ -10,11 +10,11 @@ realname    = ubot
 controlchan = #seveas
 
 [peer1]
-nickmatch = ubotu3(`|_)?!(n|i)=ubotu@no_where
+nickmatch = MicroBot2(`|_)?!(n|i)=ubot@no_where
 priority = 3
 
 [peer2]
-nickmatch = ubotu4(`|_)?!(n|i)=ubotu@no_where
+nickmatch = Microbot3(`|_)?!(n|i)=ubot@no_where
 priority = 4
 
 [loggers]

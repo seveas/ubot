@@ -104,8 +104,5 @@ INSTALLED_APPS = (
 if not os.environ.get('DBUS_SESSION_BUS_ADDRESS',None):
     os.environ['DBUS_SESSION_BUS_ADDRESS'] = 'tcp:host=localhost,port=11235'
 
-# By default, run_from_source.sh installs into $HOME/.config
-UBOT_SERVICEDIR = os.path.join(os.path.expanduser('~'), '.config', 'ubot', 'services')
-
 # Default botname is ubot
 UBOT_BOTNAME = 'ubot'
