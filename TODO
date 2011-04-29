@@ -1,4 +1,5 @@
-* More channel options wrt nicks
+* Kick/op/voice from web admin
+* Messages to channels from web admin
 * Port old ubot documentation
 * Login page and overview page
 * Document admin iface

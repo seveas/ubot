@@ -73,3 +73,9 @@ p {
     background-position: 0px;
     cursor: pointer;
 }
+.clickable {
+    cursor: pointer;
+    text-decoration: underline;
+}
+.op { font-weight: bold; }
+.voice { font-style: italic; }
