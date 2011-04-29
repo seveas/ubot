@@ -29,7 +29,7 @@ module Ubot
             if options[:name]
                 @name = options[:name]
             else
-                @name = self.class.to_s.downcase.gsub(/(.*::)?(.*?)((comma|respo)nder)?$/, '\2')
+                @name = self.class.to_s.downcase.gsub(/(.*::)?(.*?)((command|respond|listen|notifi)er)?$/, '\2')
             end
             if options[:config]
                 if File.exist?(options[:config])
@@ -134,8 +134,8 @@ module Ubot
         end
 
         def _in_join(message)
-            if message.prefix.start_with?(@nick + '!')
-                @channels[message.target] = @bots.object('/net/seveas/ubot/%s/channel/%s' % [@botname, escape_object_path(c)])
+            if message.prefix.start_with?(@nickname + '!')
+                @channels[message.target] = @bots.object('/net/seveas/ubot/%s/channel/%s' % [@botname, escape_object_path(message.target)])
                 @channels[message.target].introspect
                 @channels[message.target].default_iface = 'net.seveas.ubot.channel'
             end

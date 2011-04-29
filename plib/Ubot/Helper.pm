@@ -15,7 +15,7 @@ sub new {
     my $self = {};
     $self->{address} = $ENV{DBUS_STARTER_ADDRESS} || $ENV{DBUS_SESSION_BUS_ADDRESS};
     $self->{name} = lc($class);
-    $self->{name} =~ s/.*::(.*?)(?:(?:comma|respo)nder)?$/$1/;
+    $self->{name} =~ s/.*::(.*?)(?:(?:command|respond|listen|notifi)er)?$/$1/;
     $self->{configfile} = undef;
     bless($self, $class);
     return $self;

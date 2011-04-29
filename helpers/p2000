@@ -1,0 +1,60 @@
+#!/usr/bin/python
+
+from ubot.helper import UbotHelper
+from ubot.rfc2812 import IrcString
+import collections, glib, urllib, time, re
+
+Alert = collections.namedtuple('Alert', ('date', 'time', 'who', 'region', 'text'))
+class P2000Notifier(UbotHelper):
+    helper_info = {
+        'name': 'P2000 notifier',
+        'description': 'Display p2000 notifications',
+        'version': "1.0",
+        'url': 'http://ubot.seveas.net/helpers/p2000',
+        'author_name': 'Dennis Kaarsemaker',
+        'author_nick': 'Seveas',
+        'author_network': 'Freenode/MAGNet',
+        'author_email': 'dennis@kaarsemaker.net',
+    }
+
+    def handle_options(self, opts):
+        super(P2000Notifier, self).handle_options(opts)
+        self.tell_channels = self.conf.get(self.name, 'channels', '').split(',')
+        self.regions = self.conf.get(self.name, 'regions', '').split(',')
+        self.last_alert = 0
+        glib.timeout_add_seconds(1, lambda *args: self.alerts() and False)
+        glib.timeout_add_seconds(60, self.alerts)
+
+    def alerts(self):
+        alerts = self.get_alerts()
+        alerts = [x for x in alerts[-5:] if x.time > self.last_alert]
+        if not alerts:
+            return True
+        for a in alerts:
+            msg = "%s %s: %s (%s)" % (a.who, a.region, a.text, a.time)
+            for c in self.tell_channels:
+                if c in self.channels:
+                    self.channels[c].say(msg)
+        self.last_alert = alerts[-1].time
+        return True
+
+    def get_alerts(self):
+        """Fetch all alerts for these regions"""
+        url = 'http://www.p2000-online.net/p2000.php?%s&nofilterform=1'
+        url = url % '&'.join(['%s=1' % x for x in self.regions])
+        self.info("Refreshing alerts from %s" % url)
+        try:
+            data = urllib.urlopen(url).read()
+        except IOError:
+            import traceback
+            for l in traceback.format_exc().split('\n'):
+                self.error(l)
+            return []
+
+        # Long live nasty regular expressions, eh
+        alerts = re.findall(r'<tr><td class="DT">(.*?)</td><td class="DT">(.*?)</td><td class=".*?">(.*?)</td>' +
+                            r'<td class="Regio">(.*?)</td><td class=".*?">(.*?)</td></tr>\r?\n'
+                            , data)
+        return [Alert(*x) for x in reversed(alerts)]
+
+P2000Notifier.run()

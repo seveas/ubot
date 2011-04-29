@@ -1,4 +1,4 @@
-import ConfigParser, dbus, gobject, optparse, os, sys
+import ConfigParser, dbus, gobject, optparse, os, re, sys
 import dbus.service
 from dbus.mainloop.glib import DBusGMainLoop
 DBusGMainLoop(set_as_default=True)
@@ -20,7 +20,7 @@ class UbotHelper(dbus.service.Object):
             self.name = opts.name
         else:
             self.name = self.__class__.__name__.lower()
-            self.name = self.name.replace('responder','').replace('commander','')
+            self.name = re.sub('(respond|command|notifi|listen)er', '', self.name)
 
         self.conf = None
         if opts.config:
