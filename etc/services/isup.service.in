@@ -1,0 +1,3 @@
+[D-BUS Service]
+Name=net.seveas.ubot.helper.isup
+Exec=@PREFIX@/helpers/isup -c @SYSCONFDIR@/ubot/isup.conf
