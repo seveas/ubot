@@ -6,12 +6,14 @@ class Channel(dbus.service.Object):
     def __init__(self, bot, name):
         self.name = name
         self.synced = False
-        self.nicks = []
+        self.nicks = {}
         self.config = bot.config
         self.ircconnection = bot.ircconnection
         self.bot = bot
         self.topic = ''
         self.mode = []
+        self.limit = 0
+        self.key = ''
         dbus.service.Object.__init__(self, dbus.SessionBus(), '/net/seveas/ubot/%s/channel/%s' % 
                                      (self.config.busname, ubot.util.escape_object_path(self.name)))
 
@@ -73,6 +75,16 @@ class Channel(dbus.service.Object):
         self.ircconnection.slowsend(ubot.irc.OutMessage('TOPIC', [self.name, topic]))
 
     @dbus.service.method(dbus_interface='net.seveas.ubot.channel',
-                         in_signature='', out_signature='as')
+                         in_signature='', out_signature='a{ss}')
     def get_nicks(self):
         return self.nicks
+
+    @dbus.service.method(dbus_interface='net.seveas.ubot.channel',
+                         in_signature='', out_signature='s')
+    def get_key(self):
+        return self.key
+
+    @dbus.service.method(dbus_interface='net.seveas.ubot.channel',
+                         in_signature='', out_signature='i')
+    def get_limit(self):
+        return self.limit

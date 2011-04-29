@@ -442,4 +442,10 @@ nonrfc_replies = {
 }
 replies.update(nonrfc_replies)
 
+channel_user_modes = {
+    'o': '@',
+    'h': '%',
+    'v': '+',
+}
+
 del(s)

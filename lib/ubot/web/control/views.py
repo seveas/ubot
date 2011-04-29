@@ -8,6 +8,7 @@ import dbus
 import functools
 import os
 import simplejson
+import ubot.rfc2812
 import ubot.util
 
 class HttpResponseUnavailable(HttpResponse):
@@ -15,7 +16,7 @@ class HttpResponseUnavailable(HttpResponse):
 
 class JsonResponse(HttpResponse):
     def __init__(self, content, *args, **kwargs):
-        super(JsonResponse, self).__init__(simplejson.dumps(content), *args, **kwargs)
+        super(JsonResponse, self).__init__(simplejson.dumps(content, sort_keys=True), *args, **kwargs)
 
 def control_method(meth):
     @functools.wraps(meth)
@@ -189,7 +190,8 @@ def channel_mode(request, bot, channel, mode=None):
 
 @control_method
 def channel_nicks(request, bot, channel):
-    return {'nicks': channel.get_nicks()}
+    n = dict([(ubot.rfc2812.IrcString(nick), mode) for nick, mode in channel.get_nicks().items()])
+    return {'nicks': n, 'count': len(n.keys())}
 
 @control_method
 def channel_invite(request, bot, channel, nick):

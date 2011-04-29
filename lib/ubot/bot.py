@@ -345,13 +345,13 @@ class Ubot(dbus.service.Object):
             self.flush()
             self.channels[msg.target] = ubot.channel.Channel(self, msg.target)
             self.ircconnection.slowsend(ubot.irc.OutMessage('MODE', [msg.target]))
-        else:
-            self.channels[msg.target].nicks.append(msg.nick)
+        self.channels[msg.target].nicks[msg.nick] = ''
         for p in self.config.peers:
             if p.isme(msg):
                 self.channels[msg.target].say(random.choice(FAILOVER_HELLO))
     
     def handle_part(self, msg):
+        self.channels[msg.target].nicks.pop(msg.nick)
         if self.config.controlchan == msg.target:
             if self.isme(msg):
                 self.master_change(False)
@@ -360,13 +360,11 @@ class Ubot(dbus.service.Object):
                     if p.isme(msg):
                         p.is_active = False
                         self.maybe_master()
-        if not self.isme(msg):
-            self.channels[msg.target].nicks.remove(msg.nick)
-            return
-        self.logger.info("Left channel %s" % msg.target)
-        c = self.channels.pop(msg.target)
-        c.remove_from_connection() # dbus connection, that is
-        del(c)
+        if self.isme(msg):
+            self.logger.info("Left channel %s" % msg.target)
+            c = self.channels.pop(msg.target)
+            c.remove_from_connection() # dbus connection, that is
+            del(c)
     
     def handle_kick(self, msg):
         nick = msg.params[0]
@@ -377,18 +375,17 @@ class Ubot(dbus.service.Object):
                 if p.isme(msg.params[0]):
                     p.is_active = False
                     self.maybe_master()
-        if not self.isme(nick):
-            self.channels[msg.target].nicks.remove(nick)
-            return
-        self.logger.info("Was kicked from channel %s by %s" % (msg.target, msg.nick))
-        c = self.channels.pop(msg.target)
-        c.remove_from_connection()
-        del(c)
-        self.join(msg.target)
+        self.channels[msg.target].nicks.pop(nick)
+        if self.isme(nick):
+            self.logger.info("Was kicked from channel %s by %s" % (msg.target, msg.nick))
+            c = self.channels.pop(msg.target)
+            c.remove_from_connection()
+            del(c)
+            self.join(msg.target)
     
     def handle_namreply(self, msg):
         cname, nicks = msg.params[-2:]
-        self.channels[cname].nicks += [_nomode(x) for x in nicks.split()]
+        self.channels[cname].nicks.update(dict([splitmode(x) for x in nicks.split()]))
     
     def handle_endofnames(self, msg):
         cname = msg.params[0]
@@ -410,8 +407,8 @@ class Ubot(dbus.service.Object):
             self.nick = msg.params[0]
         for c in self.channels.values():
             if msg.nick in c.nicks:
-                c.nicks.remove(msg.nick)
-                c.nicks.append(msg.params[0])
+                c.nicks.pop(msg.nick)
+                c.nicks[msg.params[0]] = ''
     
     def handle_quit(self, msg):
         if msg.target == self.config.controlchan:
@@ -421,7 +418,7 @@ class Ubot(dbus.service.Object):
                     self.maybe_master()
         for c in self.channels.values():
             if msg.nick in c.nicks:
-                c.nicks.remove(msg.nick)
+                c.nicks.pop(msg.nick)
     
     def handle_nicknameinuse(self, msg):
         # Only time we should act on this is when self.loggedin = 1 (tried login, not seen welcome)
@@ -440,8 +437,34 @@ class Ubot(dbus.service.Object):
 
     def handle_mode(self, msg):
         # Be lazy, don't manage modes but re-request them
-        if msg.params[0] in self.channels:
-            self.rawmsg('MODE', [msg.params[0]])
+        if msg.params[0] not in self.channels:
+            return
+        channel = self.channels[msg.params[0]]
+        action = msg.params[1][0]
+        modes = msg.params[1][1:]
+        args = msg.params[2:]
+        args = [None] * (len(modes) - len(args)) + msg.params[2:]
+        for mode, arg in zip(modes, args):
+            if arg == None:
+                if action == '+' and mode not in channel.mode:
+                    channel.mode.append(mode)
+                elif mode in channel.mode:
+                    channel.mode.remove(mode)
+            elif mode == 'k':
+                channel.key = arg or ''
+            elif mode == 'l':
+                channel.limit = arg or 0
+            elif mode in ('b', 'q'):
+                # TODO: We don't handle bans yet
+                pass
+            elif mode in ubot.rfc2812.channel_user_modes:
+                umode = ubot.rfc2812.channel_user_modes[mode]
+                if action == '+' and umode not in channel.nicks[arg]:
+                    channel.nicks[arg] += umode
+                if action == '-' and umode in channel.nicks[arg]:
+                    channel.nicks[arg] = channel.nicks[arg].replace(umode,'')
+            else:
+                self.logger.error("Unknown mode received: %s %s" % (mode, arg))
 
     def maybe_master(self):
         # Not synced, not master
@@ -466,7 +489,9 @@ FAILOVER_HELLO = ("Ah, hello, Number Two",
                   "What...? Who...? When...? Where...?",
                   "Welcome to the starship heart of gold")
 
-def _nomode(x):
-    while x[0] in '@%+~':
-        x = x[1:]
-    return x
+
+_splitmode_re  = re.compile(r'^([@%+]*)([^@%+].*)$')
+def splitmode(x):
+    mode, nick = _splitmode_re.match(x).groups()
+    mode = mode or ''
+    return ubot.rfc2812.IrcString(nick), mode

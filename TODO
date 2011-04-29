@@ -5,5 +5,4 @@
 * Port plugins
 * Port ircstring to ruby and use it
 * Find a way to do something similar in perl
-* User mode tracking (op, voice)
 * Some way of seeing/editing helper config
