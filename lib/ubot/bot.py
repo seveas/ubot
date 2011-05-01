@@ -490,12 +490,12 @@ class Ubot(dbus.service.Object):
 
     def excepthook(self, type, value, tb):
         import traceback
-        tb = [x.strip() for x in traceback.format_exception(type, value, tb)]
-        for line in tb:
-            self.logger.error(tb)
+        tb = '\n'.join([x.strip() for x in traceback.format_exception(type, value, tb)])
+        for line in tb.split('\n'):
+            self.logger.error(line)
         if self.config.controlchan in self.channels:
             self.channels[self.config.controlchan].say("Exception occured, exiting")
-            for line in tb:
+            for line in tb.split('\n'):
                 self.channels[self.config.controlchan].say(line)
         time.sleep(5)
         self.quit("Oh no, not again")
