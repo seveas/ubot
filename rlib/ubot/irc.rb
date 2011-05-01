@@ -1,5 +1,40 @@
 module Irc
 
+class IrcString < String
+    def %(args) return IrcString.new super end
+    def +(args) return IrcString.new super end
+    def ==(other) return self.downcase.to_s == IrcString.new(other).downcase end
+    def <=>(other) return self.downcase.to_s <=> IrcString.new(other).downcase end
+    def casecmp(other) return self.downcase.to_s.casecmp(IrcString.new(other).downcase) end
+    def =~(obj) return self.downcase.to_s =~ obj end
+    def count(*args)
+        args = args.map {|str| IrcString.new(str).downcase }
+        return self.downcase.to_s.count(*args)
+    end
+    def end_with?(*args)
+        args = args.map {|str| IrcString.new(str).downcase }
+        return self.downcase.to_s.end_with?(*args)
+    end
+    def eql(other) return self.downcase.to_s.eql(IrcString.new(other).downcase) end
+    def hash() return self.downcase.to_s.hash end
+    def include?(other) return self.downcase.to_s.include?(IrcString.new(other).downcase) end
+    #def index? end
+    #def rindex end
+    def start_with?(*args)
+        args = args.map {|str| IrcString.new(str).downcase }
+        return self.downcase.to_s.start_with?(*args)
+    end
+
+    # For some reason, to translate a backslash, or to a backslash, one needs 4
+    # of them. This seems to be a bug in ruby.
+    def downcase() return IrcString.new(super.tr('[]\\\\~','{}|^')) end
+    def downcase!() return super.tr!('[]\\\\~','{}|^') end
+    def upcase() return IrcString.new(super.tr('{}|^','[]\\\\~')) end
+    def upcase!() return super.tr!('{}|^','[]\\\\~') end
+    def swapcase() return IrcString.new(super.tr('[]\\\\~{}|^','{}|^[]\\\\~')) end
+    def swapcase!() return super.tr!('[]\\\\~{}|^','{}|^[]\\\\~') end
+end
+
 class OutMessage
     attr_reader :command, :params
     def initialize(command, params)

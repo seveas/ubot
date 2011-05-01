@@ -4,8 +4,7 @@
 * Login page and overview page
 * Document admin iface
 * Port plugins
-* Port ircstring to ruby and use it
-* Find a way to do something similar in perl
+* Find a way to do something similar to the IrcString class in perl
 * Some way of seeing/editing helper config
 * Maybe special bus messages for mode changes, given their complexity
 * A stay dead feature if more than one exception occurs in N minutes

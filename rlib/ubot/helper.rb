@@ -90,7 +90,7 @@ module Ubot
             @bot_version = info['version']
             @master = info['master']
             @synced = info['synced']
-            @nickname = info['nickname']
+            @nickname = Irc::IrcString.new(info['nickname'])
             if @synced
                 sync_complete
             end
@@ -105,7 +105,8 @@ module Ubot
         end
 
         def message_received(prefix, command, target, params)
-            message = Irc::InMessage.new(prefix, command, target, params)
+            message = Irc::InMessage.new(Irc::IrcString.new(prefix), Irc::IrcString.new(command), 
+                                         Irc::IrcString.new(target), params.map { |x| Irc::IrcString.new(x) })
             message.helper = self
             command.sub!(/^(CMD|RPL)_/, '')
             command.downcase!
