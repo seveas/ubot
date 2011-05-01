@@ -16,9 +16,9 @@ The methods and signals on bot objects are all part of the ``net.seveas.ubot``
 interface. For methods on the channel objects, this is the
 ``net.seveas.ubot.channel`` interface.
 
-Helpers must implemenet the ``net.seveas.ubot.helper`` interface, which
-contains methods to query and control helpers. The standard helper libraries
-implement this interface for you.
+Helpers must implement the ``net.seveas.ubot.helper`` interface, which contains
+methods to query and control helpers. The standard helper libraries implement
+this interface for you.
 
 The ubot interface
 ------------------
@@ -84,7 +84,7 @@ Methods
    Unregistering is not needed (or possible, for that matter), as the bot
    detects when helpers disconnect from the bus.
 
-.. get_channels:: (out: as)
+.. function:: get_channels (out: as)
 
    Returns a list of channels the bot has joined.
 
@@ -116,7 +116,11 @@ Methods
    Makes the bot try to join a channel. A key is required, use an empty string
    for channels that do not require a key to join.
 
-.. function:: log(ident, level, msg) (sss)
+.. function:: list_channels(nick) (in: s)
+
+   Get all channels a certain nickname can be found in.
+
+.. function:: log(ident, level, msg) (in: sss)
 
    Log a message via the bots logger. 
 
@@ -129,6 +133,10 @@ Methods
    Makes the bot quit IRC and shut itself down. This will also stop all the
    active helpers.
 
+.. function:: rqwmsg(command, params) (in: sas)
+
+   Send a raw message with parameters.
+
 .. function:: say(user, message) (in: ss)
 .. function:: do(user, message) (in: ss)
 .. function:: slowsay(user, message) (in: ss)
@@ -137,5 +145,109 @@ Methods
    This sends a message to a user. The ``do`` variants send the equivalent of a
    ``/me <message>``. The slow variants add the message to the end of the slow
    queue, which is only emptied when the normal queue is empty.
+
+The channel interface
+---------------------
+
+For each signal and method, the D-Bus signature is displayed after the
+parameters if it is not empty. The meaning of these signatures can be found in
+the `D-Bus specification`_.
+
+Signals
+~~~~~~~
+None yet.
+
+Methods
+~~~~~~~
+
+.. function:: get_key() (out: s)
+
+   Gets the channel key.
+
+.. function:: get_limit() (out: i)
+
+   Gets the channel occupancy limit.
+
+.. function:: get_mode() (out: as)
+
+   Returns a list of mode characters. This never includes mode l or k, or thier
+   values (channel limit and key).
+
+.. function:: get_nicks() (out: a{ss})
+
+   This returns a dictionary mapping nicknames to mode characters. Mode
+   characters are ``@`` for ops, and ``+`` for voice. Beware, both can be
+   present for the same user, in any order.
+
+.. function:: get_topic() (out: s)
+
+   Gets the channel topic.
+
+.. function:: invite(nick) (in: s)
+
+   Invite a user to the channel
+
+.. function:: kick(nick, msg) (in: ss)
+
+   Kick a user from the channel.
+
+.. function:: part(partmsg) (in: s)
+
+   Leave the channel
+
+.. function:: say(message) (in: ss)
+.. function:: do(message) (in: ss)
+.. function:: slowsay(message) (in: ss)
+.. function:: slowdo(message) (in: ss)
+
+   This sends a message to the channel. The ``do`` variants send the equivalent
+   of a ``/me <message>``. The slow variants add the message to the end of the
+   slow queue, which is only emptied when the normal queue is empty.
+
+.. function:: set_mode(mode) (in: s)
+
+   This sends a mode command to the server. mode is passed raw, so it can
+   contain modes, bans channel limit and channel key.
+
+.. function:: set_topic(topic) (in: s)
+
+   This sets the channel topic.
+
+
+The helper interface
+--------------------
+
+All helpers must implement the full helper interface. There are only a few
+methods, and the helper libraries shipped with µbot implement them all for you.
+
+For each signal and method, the D-Bus signature is displayed after the
+parameters if it is not empty. The meaning of these signatures can be found in
+the `D-Bus specification`_.
+
+Signals
+~~~~~~~
+None yet.
+
+Methods
+~~~~~~~
+
+.. function:: quit()
+
+   The helper must exit when this is called.
+
+.. function:: get_info() (out: a{ss})
+
+   Must returns a dictionary of information with the following keys:
+
+   * name
+   * description
+   * version
+   * url
+   * author_name
+   * author_nick
+   * author_network
+   * author_email
+
+   Note that all values must be strings.
 
 .. _`D-Bus specification`: http://dbus.freedesktop.org/doc/dbus-specification.html

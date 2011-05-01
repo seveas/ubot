@@ -13,3 +13,10 @@
 * Bot interface should be net.seveas.ubot.bot
 * message_sent should have target
 * Rename connection_made to connection_established
+* ubot.channel.set_limit
+* ubot.channel.set_key
+* better set_mode
+* Nicer ban handling
+* Server type identification for network-specific features
+* merge ubot.irc and ubot.rfc2812 and move the perl/ruby versions of Inmessage/Outmessage to irc
+* command line args should be passed on, not just opts
