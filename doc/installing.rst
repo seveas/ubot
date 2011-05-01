@@ -13,6 +13,7 @@ Prerequisites
 * Python 2.5 or newer
 * DBus and the python dbus bindings
 * Perl DBus bindings (Net::DBus) for the perl example helper
+* Nokogiri for the ruby example helper
 * The django web framework
 * pygobject (part of pygtk)
 * git

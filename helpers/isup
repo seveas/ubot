@@ -1,7 +1,9 @@
 #!/usr/bin/ruby
 require 'ubot/helper'
+require 'ubot/irc'
 require 'open-uri'
 require 'nokogiri'
+require 'uri'
 
 class IsupCommander < Ubot::Commander
     def initialize
@@ -17,11 +19,12 @@ class IsupCommander < Ubot::Commander
             'author_email' => 'dennis@kaarsemaker.net',
         }
         @commands = {
-            'isup' => 'isup'
+            Irc::IrcString.new('isup') => 'isup'
         }
     end
     def isup(message, url)
-        doc = Nokogiri::HTML(open('http://isup.me/www.seveas.net'))
+        url = URI.escape(url, Regexp.new("[^#{URI::PATTERN::UNRESERVED}]"))
+        doc = Nokogiri::HTML(open('http://isup.me/' + url))
         doc.at_css("p").content = ''
         doc.at_css("center").content = ''
         doc = doc.at_css("div#container").content.strip.gsub(/\s\s+/, ' ')
