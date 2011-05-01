@@ -49,7 +49,7 @@ class IrcConnection(object):
         self.data = ''
         self.queue = []
         self.slowqueue = []
-        self.times = [0,0,0,0,0,0]
+        self.sent_times = []
         self.quota = 1450 # Allow some room for ping
         self.pinging = False
         self.logger = logging.getLogger('ubot.irc')
@@ -115,12 +115,10 @@ class IrcConnection(object):
             return False
 
     def _send(self, msg):
-        # FIXME fail on too long messages, or maybe split?
-        self.times.pop(0)
-        self.times.append(time.time())
         self.quota -= len(msg)
         self.message_handler(msg)
         self.socket.send(unicode(msg).encode('utf-8'))
+        self.sent_times.append(time.time())
 
     def ping(self):
         if not self.pinging:
@@ -130,21 +128,14 @@ class IrcConnection(object):
             self.socket.send(unicode(msg))
 
     def send(self, msg):
-        if len(msg) > self.quota:
-            self.ping()
-            self.queue.append(msg)
-        else:
-            now = time.time()
-            #if self.times[-1] + 1 < now and self.times[0] +18 < now:
-            if self.times[-1] + 1 < now and self.times[0] +12 < now:
-                self._send(msg)
-            else:
-                self.queue.append(msg)
+        # FIXME fail on too long messages, or maybe split?
+        self.queue.append(msg)
+        self.handle_queue()
     
     def fastsend(self, msg):
         if len(msg) > self.quota:
-            self.ping()
             self.queue.insert(0,msg)
+            self.handle_queue()
         else:
             self._send(msg)
 
@@ -154,8 +145,9 @@ class IrcConnection(object):
     def handle_queue(self):
         if not self.socket:
             return True
-        now = time.time()
-        if self.times[-1] + 1 > now or self.times[0] + 18 > now:
+        # Send not more than 10 messages in 5 seconds. _send appends to this array
+        self.sent_times = [x for x in self.sent_times if x + 5 > time.time()]
+        if len(self.sent_times) >= 10:
             return True
         if self.queue:
             if len(self.queue[0]) > self.quota:
