@@ -17,4 +17,3 @@
 * better set_mode
 * Nicer ban handling
 * Server type identification for network-specific features
-* command line args should be passed on, not just opts

@@ -25,7 +25,7 @@ module Ubot
             parser.on('-c', '--config FILE', 'Configuration file') { |file| options[:config] = File.expand_path(file) }
         end
 
-        def handle_options(options)
+        def handle_options(options, arguments)
             if options[:name]
                 @name = options[:name]
             else
@@ -174,7 +174,7 @@ module Ubot
                 this.add_options(parser, options)
             end
             optparse.parse!
-            this.handle_options(options)
+            this.handle_options(options, ARGV)
             this.info("helper started")
             this.runloop = DBus::Main.new()
             this.runloop << DBus::session_bus
@@ -197,7 +197,7 @@ module Ubot
     end
 
     class Responder < Helper
-        def handle_options(options)
+        def handle_options(options, arguments)
             super
             @active_channels = (@conf[@name]['channels'] || '').split(',')
             @respond_to_all = @active_channels.member?('all')
@@ -246,7 +246,7 @@ module Ubot
     end
 
     class Commander < Responder
-        def handle_options(options)
+        def handle_options(options, arguments)
             super
             @prefix = @conf[@name]['prefix'] || '@'
         end

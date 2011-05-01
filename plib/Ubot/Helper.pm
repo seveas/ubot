@@ -30,7 +30,7 @@ sub add_options {
 }
 
 sub handle_options {
-    my ($self) = @_;
+    my ($self, $args) = @_;
     die("No configfile specified") unless $self->{configfile};
     die("No such configfile") unless -e $self->{configfile};
     $self->{config} = Config::INI::Reader->read_file($self->{configfile});
@@ -193,7 +193,7 @@ sub run {
     my %opts;
     $self->add_options(\%opts);
     GetOptions(%opts);
-    $self->handle_options();
+    $self->handle_options(\@ARGV);
     $self->info("helper started");
     $self->{reactor} = Net::DBus::Reactor->main();
     $self->{reactor}->run;
@@ -210,8 +210,8 @@ use vars qw(@ISA);
 @Ubot::Responder::ISA = qw(Ubot::Helper);
 
 sub handle_options {
-    my ($self) = @_;
-    $self->SUPER::handle_options();
+    my ($self, $args) = @_;
+    $self->SUPER::handle_options($args);
     my @channels = split(/,/, $self->{config}{$self->{name}}{'channels'} || '');
     $self->{active_channels} = \@channels;
     $self->{respond_to_all} = 1 if grep { $_ eq 'all' } @{$self->{active_channels}};
@@ -261,8 +261,8 @@ use vars qw(@ISA);
 @Ubot::Commander::ISA = qw(Ubot::Responder);
 
 sub handle_options {
-    my ($self, $options) = @_;
-    $self->SUPER::handle_options($options);
+    my ($self, $args) = @_;
+    $self->SUPER::handle_options($args);
     $self->{prefix} = $self->{config}{$self->{name}}{'prefix'} || '@';
 }
 

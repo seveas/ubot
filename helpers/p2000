@@ -17,8 +17,8 @@ class P2000Notifier(UbotHelper):
         'author_email': 'dennis@kaarsemaker.net',
     }
 
-    def handle_options(self, opts):
-        super(P2000Notifier, self).handle_options(opts)
+    def handle_options(self, opts, args):
+        super(P2000Notifier, self).handle_options(opts, args)
         self.tell_channels = self.conf.get(self.name, 'channels', '').split(',')
         self.regions = self.conf.get(self.name, 'regions', '').split(',')
         self.last_alert = 0

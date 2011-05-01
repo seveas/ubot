@@ -21,8 +21,8 @@ class LartResponder(UbotCommander):
         IrcString('pity'): 'lart',
     }
 
-    def handle_options(self, opts):
-        super(LartResponder, self).handle_options(opts)
+    def handle_options(self, opts, args):
+        super(LartResponder, self).handle_options(opts, args)
         lartdb = self.conf.get(self.name, 'larts')
         self.larts = open(lartdb).read().splitlines()
 

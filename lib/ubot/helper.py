@@ -14,7 +14,7 @@ class UbotHelper(dbus.service.Object):
         parser.add_option('-n', '--name', dest='name', help='Plugin name', metavar='NAME')
         parser.add_option('-c', '--config', dest='config', default=None, help='Specify configfile', metavar='FILE')
 
-    def handle_options(self, opts):
+    def handle_options(self, opts, args):
         if opts.name:
             self.name = opts.name
         else:
@@ -129,7 +129,7 @@ class UbotHelper(dbus.service.Object):
         opts, args = parser.parse_args()
         os.environ['DBUS_SESSION_BUS_ADDRESS'] = os.environ.get('DBUS_STARTER_ADDRESS', opts.address)
 
-        c.handle_options(opts)
+        c.handle_options(opts, args)
         c.info("helper started")
         c.mainloop = gobject.MainLoop()
         c.mainloop.run()
@@ -150,8 +150,8 @@ class UbotHelper(dbus.service.Object):
         return self.helper_info
 
 class UbotResponder(UbotHelper):
-    def handle_options(self, opts):
-        super(UbotResponder, self).handle_options(opts)
+    def handle_options(self, opts, args):
+        super(UbotResponder, self).handle_options(opts, args)
         self.active_channels = self.conf.get(self.name, 'channels', '').split(',')
         self.respond_to_all = 'all' in self.channels
         self.respond_to_private = self.botname in self.channels
@@ -189,8 +189,8 @@ class UbotResponder(UbotHelper):
                     self.bot.say(target, message)
 
 class UbotCommander(UbotResponder):
-    def handle_options(self, opts):
-        super(UbotCommander, self).handle_options(opts)
+    def handle_options(self, opts, args):
+        super(UbotCommander, self).handle_options(opts, args)
         self.prefix = self.conf.get(self.name, 'prefix', '@')
 
     def addressed(self, message):
