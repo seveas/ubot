@@ -201,7 +201,7 @@ module Ubot
             super
             @active_channels = (@conf[@name]['channels'] || '').split(',')
             @respond_to_all = @active_channels.member?('all')
-            @respond_to_private = @respond_to_all || @active_channels.member?(@name)
+            @respond_to_private = @respond_to_all || @active_channels.member?(@botname)
         end
 
         def addressed(message)

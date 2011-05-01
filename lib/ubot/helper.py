@@ -155,7 +155,7 @@ class UbotResponder(UbotHelper):
         super(UbotResponder, self).handle_options(opts)
         self.active_channels = self.conf.get(self.name, 'channels', '').split(',')
         self.respond_to_all = 'all' in self.channels
-        self.respond_to_private = self.respond_to_all or (self.name in self.channels)
+        self.respond_to_private = self.botname in self.channels
 
     def addressed(self, message):
         if not super(UbotResponder, self).addressed(message):

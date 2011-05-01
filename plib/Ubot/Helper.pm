@@ -214,7 +214,7 @@ sub handle_options {
     my @channels = split(/,/, $self->{config}{$self->{name}}{'channels'} || '');
     $self->{active_channels} = \@channels;
     $self->{respond_to_all} = 1 if grep { $_ eq 'all' } @{$self->{active_channels}};
-    $self->{respond_to_private} = 1 if(grep { $_ eq $self->{name} } @{$self->{active_channels}} || $self->{respond_to_all});
+    $self->{respond_to_private} = 1 if(grep { $_ eq $self->{botname} } @{$self->{active_channels}} || $self->{respond_to_all});
 }
 
 sub addressed {
