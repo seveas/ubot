@@ -1,0 +1,36 @@
+#!/usr/bin/python
+
+from ubot.helper import UbotCommander
+from ubot.irc import IrcString
+
+class HelloResponder(UbotCommander):
+    helper_info = {
+        'name': 'Hello',
+        'description': 'Say hello',
+        'version': "1.0",
+        'url': 'http://ubot.seveas.net/helpers/py_hello',
+        'author_name': 'Dennis Kaarsemaker',
+        'author_nick': 'Seveas',
+        'author_network': 'Freenode/MAGNet',
+        'author_email': 'dennis@kaarsemaker.net',
+    }
+    commands = {
+        IrcString('hello'): 'hello',
+    }
+
+    def add_options(self, parser):
+        super(HelloResponder, self).add_options(parser)
+        parser.add_option('-u', '--uppercase', dest='uppercase', action='store_true', default=False,
+                          help="Shout a greeting back")
+
+    def handle_options(self, opts, args):
+        super(HelloResponder, self).handle_options(opts, args)
+        self.uppercase = opts.uppercase
+
+    def hello(self, message, argument):
+        reply = "Hello, %s!" % message.prefix[:message.prefix.find('!')]
+        if self.uppercase:
+            reply = reply.upper()
+        message.reply(reply, action=False, slow=True)
+
+HelloResponder.run()

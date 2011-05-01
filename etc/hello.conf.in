@@ -1,0 +1,4 @@
+[hello]
+prefix   = @
+channels = #microbot
+botname  = ubot

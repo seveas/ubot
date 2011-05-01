@@ -207,42 +207,111 @@ helper.
 
 The ubot.irc module
 -------------------
-
 .. module:: ubot.irc
+
+This module contains various IRC-related utilities and protocol-specific classes.
 
 .. class:: InMessage
 
+  This class represents an incoming message. Messages have a prefix (the
+  nick\!ident@host string for the sender), a command (such as PRIVMSG) and
+  parameters. Some messages have a target.
+
   .. function:: __init__(self, prefix, cmd, params, target)
+
+     Initializer function. All arguments are set as attributes of the resulting
+     object.
 
   .. function:: is_ctcp(self)
 
+     Whether a message is a ctcp message (such as a DCC invitation)
+
   .. function:: is_action(self)
+
+     Whether a message is an action (Like /me does something)
 
   .. function:: reply(self, message, action=Flase, private=False, slow=False)
 
+     Utility function to reply to a message (works only for subclasses of
+     :class:`UbotResponder`). 
+
 .. class:: OutMessage
+
+  This class represents an outgoing message. Messages have a command (such as
+  PRIVMSG) and parameters.
 
   .. function:: __init__(self, command, params)
 
-The ubot.rfc2812 module
------------------------
-
-.. module:: ubot.rfc2812
+     Initializer function. All arguments are set as attributes of the resulting
+     object.
 
 .. class:: IrcString
 
+  A subclass of the default unicode object that does all its comparisons not
+  only case-insensitive, but the following mapping from rfc 2812 is taken into
+  account as well:
+
+  ===== =====
+  Lower Upper
+  ===== =====
+  {     [
+  }     ]
+  \|    \\
+  ^     ~
+  ===== =====
+
+  This mapping is used in comparisons and for case-modifying functions.
+
 .. data:: has_target
+
+   A list of commands that have a target. (channel or nickname)
 
 .. data:: nargs_in
 
+   A dictionary mapping commands to the number of arguments that don't need to
+   be prefixed with a :
+
 .. data:: nargs_out
+
+   A dictionary mapping commands to the number of arguments that don't need to
+   be prefixed with a :
 
 .. data:: replies
 
+   A dictionary mapping numerical replies to descriptive ones.
+
 .. data:: channel_user_modes
+
+   A mapping of channel user modes to nickname prefixes (op, voice)
 
 Configuration file
 ------------------
+Each helper must have a configuration file, which must be an ini file. Our
+example helper needs nothing more than the following.
+
+.. code-block:: ini
+
+  [hello]
+  prefix   = @
+  channels = #microbot
+  botname  = ubot
+
+The section name must be the same as the name of the bot, given via the ``-n``
+commandline argument or taken from the class name as described above. Given
+that the helper does not need extra configuration, only the keys defined by the
+parent classes are required. There is no limit as to how many sections and keys
+you define. All that matters is that it is valid ini syntax.
 
 Service definition
 ------------------
+For D-Bus to be able to autostart your helper, you should also write a service
+definition and place it in the service directory (by default
+:file:`~/.config/ubot/services/`). For the hello service, this would look like:
+
+.. code-block:: ini
+
+  [D-BUS Service]
+  Name=net.seveas.ubot.helper.hello
+  Exec=/path/to/helpers/py_hello -c ~/.config/ubot/lart.conf
+
+Making your helper autostartable is of course not mandatory.

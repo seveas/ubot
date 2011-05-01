@@ -1,8 +1,6 @@
 * Kick/op/voice from web admin
 * Messages to channels from web admin
-* Port old ubot documentation
 * Login page and overview page
-* Document admin iface
 * Port plugins
 * Find a way to do something similar to the IrcString class in perl
 * Some way of seeing/editing helper config
