@@ -104,7 +104,7 @@ class IrcConnection(object):
         while True:
             self.socket, server, port = try_connect(self.servers)
             if self.socket:
-                self.bot.connection_made(server, port)
+                self.bot.connection_established(server, port)
                 gobject.io_add_watch(self.socket,
                                      gobject.IO_IN | gobject.IO_PRI | gobject.IO_ERR | gobject.IO_HUP,
                                      self.incoming)

@@ -213,7 +213,7 @@ class Ubot(dbus.service.Object):
         self.clear_data()
     
     @dbus.service.signal(dbus_interface='net.seveas.ubot', signature='si')
-    def connection_made(self, server, port):
+    def connection_established(self, server, port):
         self.server = server
         self.port = port
         self.connected = True

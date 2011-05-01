@@ -34,7 +34,7 @@ Signals
 
    Sent whenever the current connection is dropped.
 
-.. function:: connection_made(server, port) (si)
+.. function:: connection_established(server, port) (si)
 
    Sent whenever a connection is made. Server and port are the server the bot
    is now connected to.

@@ -12,7 +12,6 @@
 * Proper permissions for controlling the bot
 * Bot interface should be net.seveas.ubot.bot
 * message_sent should have target
-* Rename connection_made to connection_established
 * ubot.channel.set_limit
 * ubot.channel.set_key
 * better set_mode
