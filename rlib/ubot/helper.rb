@@ -67,7 +67,7 @@ module Ubot
             @bots = DBus::session_bus.service('net.seveas.ubot.' + @botname)
             @bot = @bots.object('/net/seveas/ubot/' + @botname)
             @bot.introspect
-            @bot.default_iface = 'net.seveas.ubot'
+            @bot.default_iface = 'net.seveas.ubot.bot'
             @bot.register_helper(@busname, @busobjname)
 
             @bot.on_signal('message_sent') do |command,params|

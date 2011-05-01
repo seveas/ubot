@@ -174,22 +174,22 @@ class Ubot(dbus.service.Object):
 
     # Dbus signals and methods
 
-    @dbus.service.signal(dbus_interface='net.seveas.ubot', signature='sssas')
+    @dbus.service.signal(dbus_interface='net.seveas.ubot.bot', signature='sssas')
     def message_received(self, prefix, command, target, params):
         """Send the received message over the dbus"""
         pass
 
-    @dbus.service.signal(dbus_interface='net.seveas.ubot', signature='sas')
+    @dbus.service.signal(dbus_interface='net.seveas.ubot.bot', signature='sas')
     def message_sent(self, command, params):
         """Send the sent message over the dbus"""
         pass
 
-    @dbus.service.signal(dbus_interface='net.seveas.ubot', signature='')
+    @dbus.service.signal(dbus_interface='net.seveas.ubot.bot', signature='')
     def exiting(self):
         """We are on our way out"""
         pass
 
-    @dbus.service.signal(dbus_interface='net.seveas.ubot', signature='')
+    @dbus.service.signal(dbus_interface='net.seveas.ubot.bot', signature='')
     def sync_complete(self):
         """We have synced"""
         self.synced = True
@@ -198,7 +198,7 @@ class Ubot(dbus.service.Object):
             self.channels[self.config.controlchan].say(random.choice(FAILOVER_HELLO))
             self.maybe_master()
 
-    @dbus.service.signal(dbus_interface='net.seveas.ubot', signature='b')
+    @dbus.service.signal(dbus_interface='net.seveas.ubot.bot', signature='b')
     def master_change(self, value):
         if self.master == value:
             return
@@ -208,33 +208,33 @@ class Ubot(dbus.service.Object):
             self.logger.info("Dropping master role")
         self.master = value
 
-    @dbus.service.signal(dbus_interface='net.seveas.ubot', signature='')
+    @dbus.service.signal(dbus_interface='net.seveas.ubot.bot', signature='')
     def connection_dropped(self):
         self.clear_data()
     
-    @dbus.service.signal(dbus_interface='net.seveas.ubot', signature='si')
+    @dbus.service.signal(dbus_interface='net.seveas.ubot.bot', signature='si')
     def connection_established(self, server, port):
         self.server = server
         self.port = port
         self.connected = True
 
-    @dbus.service.method(dbus_interface='net.seveas.ubot',
+    @dbus.service.method(dbus_interface='net.seveas.ubot.bot',
                          in_signature='so', out_signature='')
     def register_helper(self, service, path):
         self.helpers[service] = path
 
-    @dbus.service.method(dbus_interface='net.seveas.ubot',
+    @dbus.service.method(dbus_interface='net.seveas.ubot.bot',
                          in_signature='', out_signature='aas')
     def get_helpers(self):
         return self.helpers.items()
 
-    @dbus.service.method(dbus_interface='net.seveas.ubot',
+    @dbus.service.method(dbus_interface='net.seveas.ubot.bot',
                          in_signature='', out_signature='as')
     def get_channels(self):
         """Return a list of channels"""
         return self.channels.keys()
 
-    @dbus.service.method(dbus_interface='net.seveas.ubot',
+    @dbus.service.method(dbus_interface='net.seveas.ubot.bot',
                          in_signature='', out_signature='a{sv}')
     def get_info(self):
         return {
@@ -247,7 +247,7 @@ class Ubot(dbus.service.Object):
             'port': self.port,
         }
 
-    @dbus.service.method(dbus_interface='net.seveas.ubot',
+    @dbus.service.method(dbus_interface='net.seveas.ubot.bot',
                          in_signature='ss', out_signature='')
     def join(self, channel, password=''):
         """Join a channel, optionally with password"""
@@ -257,7 +257,7 @@ class Ubot(dbus.service.Object):
         else:
             self.ircconnection.slowsend(ubot.irc.OutMessage('JOIN', [channel]))
 
-    @dbus.service.method(dbus_interface='net.seveas.ubot',
+    @dbus.service.method(dbus_interface='net.seveas.ubot.bot',
                          in_signature='s', out_signature='')
     def quit(self, quitmessage):
         """Quit from the server"""
@@ -265,7 +265,7 @@ class Ubot(dbus.service.Object):
         self.ircconnection.exiting = True
         self.ircconnection.fastsend(ubot.irc.OutMessage('QUIT', [quitmessage]))
 
-    @dbus.service.method(dbus_interface='net.seveas.ubot',
+    @dbus.service.method(dbus_interface='net.seveas.ubot.bot',
                          in_signature='ss', out_signature='')
     def say(self, user, message):
         """Send a message to a user"""
@@ -273,7 +273,7 @@ class Ubot(dbus.service.Object):
             raise ubot.exceptions.InvalidTargetException('Can only send to people')
         self.ircconnection.send(ubot.irc.OutMessage('PRIVMSG', [user, message]))
 
-    @dbus.service.method(dbus_interface='net.seveas.ubot',
+    @dbus.service.method(dbus_interface='net.seveas.ubot.bot',
                          in_signature='ss', out_signature='')
     def do(self, user, message):
         """Send a message to a user"""
@@ -281,7 +281,7 @@ class Ubot(dbus.service.Object):
             raise ubot.exceptions.InvalidTargetException('Can only send to people')
         self.ircconnection.send(ubot.irc.OutMessage('PRIVMSG', [user, '\x01ACTION ' + message + '\x01']))
 
-    @dbus.service.method(dbus_interface='net.seveas.ubot',
+    @dbus.service.method(dbus_interface='net.seveas.ubot.bot',
                          in_signature='ss', out_signature='')
     def slowsay(self, user, message):
         """Send a message to a user"""
@@ -289,7 +289,7 @@ class Ubot(dbus.service.Object):
             raise ubot.exceptions.InvalidTargetException('Can only send to people')
         self.ircconnection.send(ubot.irc.OutMessage('PRIVMSG', [user, message]))
 
-    @dbus.service.method(dbus_interface='net.seveas.ubot',
+    @dbus.service.method(dbus_interface='net.seveas.ubot.bot',
                          in_signature='ss', out_signature='')
     def slowdo(self, user, message):
         """Send a message to a user"""
@@ -297,25 +297,25 @@ class Ubot(dbus.service.Object):
             raise ubot.exceptions.InvalidTargetException('Can only send to people')
         self.ircconnection.send(ubot.irc.OutMessage('PRIVMSG', [user, '\x01ACTION ' + message + '\x01']))
 
-    @dbus.service.method(dbus_interface='net.seveas.ubot',
+    @dbus.service.method(dbus_interface='net.seveas.ubot.bot',
                          in_signature='s', out_signature='')
     def nick(self, newnick):
         self.ircconnection.send(ubot.irc.OutMessage('NICK',[newnick]))
 
-    @dbus.service.method(dbus_interface='net.seveas.ubot',
+    @dbus.service.method(dbus_interface='net.seveas.ubot.bot',
                          in_signature='sss', out_signature='', sender_keyword='sender')
     def log(self, ident, level, msg, sender=None):
         if level not in logging._levelNames.values():
             return
         logging.getLogger('ubot.helper.' + ident).log(getattr(logging,level), u'(%s) %s' % (sender, msg))
     
-    @dbus.service.method(dbus_interface='net.seveas.ubot',
+    @dbus.service.method(dbus_interface='net.seveas.ubot.bot',
                          in_signature='sas', out_signature='')
     def rawmsg(self, cmd, args):
         """Send a raw message to the server"""
         self.ircconnection.send(ubot.irc.OutMessage(cmd, args))
 
-    @dbus.service.method(dbus_interface='net.seveas.ubot',
+    @dbus.service.method(dbus_interface='net.seveas.ubot.bot',
                          in_signature='s', out_signature='as')
     def list_channels(self, nick):
         nick = ubot.irc.IrcString(nick)

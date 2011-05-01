@@ -53,11 +53,11 @@ class UbotHelper(dbus.service.Object):
         self.bot = dbus.SessionBus().get_object('net.seveas.ubot.' + self.botname,
                                                 '/net/seveas/ubot/' + self.botname)
         self.bot.register_helper(self.busname, self.busobjname)
-        self.bot.connect_to_signal('message_sent', self.message_sent, dbus_interface='net.seveas.ubot')
-        self.bot.connect_to_signal('message_received', self.message_received, dbus_interface='net.seveas.ubot')
-        self.bot.connect_to_signal('sync_complete', self.sync_complete, dbus_interface='net.seveas.ubot')
-        self.bot.connect_to_signal('master_change', self.master_change, dbus_interface='net.seveas.ubot')
-        self.bot.connect_to_signal('exiting', lambda: self.mainloop.quit(), dbus_interface='net.seveas.ubot')
+        self.bot.connect_to_signal('message_sent', self.message_sent, dbus_interface='net.seveas.ubot.bot')
+        self.bot.connect_to_signal('message_received', self.message_received, dbus_interface='net.seveas.ubot.bot')
+        self.bot.connect_to_signal('sync_complete', self.sync_complete, dbus_interface='net.seveas.ubot.bot')
+        self.bot.connect_to_signal('master_change', self.master_change, dbus_interface='net.seveas.ubot.bot')
+        self.bot.connect_to_signal('exiting', lambda: self.mainloop.quit(), dbus_interface='net.seveas.ubot.bot')
         info = self.bot.get_info()
         self.bot_version, self.master, self.synced, self.nickname = info['version'], info['master'], info['synced'], info['nickname']
         self.channels = {}

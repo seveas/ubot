@@ -12,16 +12,16 @@ non-alphabetic characters are replaced with an underscore (``_``) followed by
 the ordinal number of the character. So, ``#`` is replaced ``_35`` and the
 channel ``#microbot`` will be ``/net/seveas/ubot/ubot/channel/_35microbot``.
 
-The methods and signals on bot objects are all part of the ``net.seveas.ubot``
-interface. For methods on the channel objects, this is the
-``net.seveas.ubot.channel`` interface.
+The methods and signals on bot objects are all part of the
+``net.seveas.ubot.bot`` interface. For methods on the channel objects, this is
+the ``net.seveas.ubot.channel`` interface.
 
 Helpers must implement the ``net.seveas.ubot.helper`` interface, which contains
 methods to query and control helpers. The standard helper libraries implement
 this interface for you.
 
-The ubot interface
-------------------
+The net.seveas.ubot.bot interface
+---------------------------------
 
 For each signal and method, the D-Bus signature is displayed after the
 parameters if it is not empty. The meaning of these signatures can be found in
@@ -38,17 +38,17 @@ Signals
 
    Sent whenever a connection is made. Server and port are the server the bot
    is now connected to.
-.. function:: net.seveas.ubot.exiting()
+.. function:: exiting()
 
    This signal is sent when the bot is quitting. When helpers receive this
    signal, they should also terminate nicely.
 
-.. function:: net.seveas.ubot.master_change(value) (b)
+.. function:: master_change(value) (b)
 
    Sent whenever the master status of the bot changes. Value is either ``True``
    or ``False`` and indicates whether the bot is now failover master or not.
 
-.. function:: net.seveas.ubot.message_received(prefix, command, target, params) (sssas)
+.. function:: message_received(prefix, command, target, params) (sssas)
 
    This signal is sent whenever a signal is received. The prefix is the
    nick!ident\@host string of the user who sent the message, command is the
@@ -62,13 +62,13 @@ Signals
    params  ``[u'Hello, world!']``
    ======= =========================================
    
-.. function:: net.seveas.ubot.message_sent(command, params) (sas)
+.. function:: message_sent(command, params) (sas)
 
    This signal is sent whenever a message is sent. Command and params have the
    same meaning as for :func:`message_received`. The target is part of the
    params.
 
-.. function:: net.seveas.ubot.sync_complete()
+.. function:: sync_complete()
 
    This signal is sent when the bot has joined all its configured channels
    after joining and all channel info for this channel has been received. The
@@ -146,8 +146,8 @@ Methods
    ``/me <message>``. The slow variants add the message to the end of the slow
    queue, which is only emptied when the normal queue is empty.
 
-The channel interface
----------------------
+The net.seveas.ubot.channel interface
+-------------------------------------
 
 For each signal and method, the D-Bus signature is displayed after the
 parameters if it is not empty. The meaning of these signatures can be found in
@@ -214,8 +214,8 @@ Methods
    This sets the channel topic.
 
 
-The helper interface
---------------------
+The net.seveas.ubot.helper interface
+------------------------------------
 
 All helpers must implement the full helper interface. There are only a few
 methods, and the helper libraries shipped with µbot implement them all for you.

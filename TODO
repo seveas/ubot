@@ -10,7 +10,6 @@
 * Maybe special bus messages for mode changes, given their complexity
 * A stay dead feature if more than one exception occurs in N minutes
 * Proper permissions for controlling the bot
-* Bot interface should be net.seveas.ubot.bot
 * message_sent should have target
 * ubot.channel.set_limit
 * ubot.channel.set_key

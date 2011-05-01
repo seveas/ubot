@@ -34,9 +34,9 @@ if not opts.channel:
                          '/net/seveas/ubot/' + opts.dbus_name)
     print "Calling %s with arguments %s" % (command, unicode(args))
     if command != 'rawmsg':
-        print getattr(bot, command)(*args, **{'dbus_interface': 'net.seveas.ubot'})
+        print getattr(bot, command)(*args, **{'dbus_interface': 'net.seveas.ubot.bot'})
     else:
-        print getattr(bot, command)(args[0], args[1:], **{'dbus_interface': 'net.seveas.ubot'})
+        print getattr(bot, command)(args[0], args[1:], **{'dbus_interface': 'net.seveas.ubot.bot'})
 else:
     chan = bus.get_object('net.seveas.ubot.' + opts.dbus_name, 
                           '/net/seveas/ubot/%s/channel/%s' % (opts.dbus_name, ubot.util.escape_object_path(opts.channel)))
