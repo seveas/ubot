@@ -18,5 +18,4 @@
 * better set_mode
 * Nicer ban handling
 * Server type identification for network-specific features
-* merge ubot.irc and ubot.rfc2812 and move the perl/ruby versions of Inmessage/Outmessage to irc
 * command line args should be passed on, not just opts

@@ -1,7 +1,6 @@
 import ubot.channel
 import ubot.exceptions
 import ubot.irc
-import ubot.rfc2812
 
 import copy, datetime, dbus, gobject, logging, os, random, re, signal, sys, time
 import dbus.service
@@ -319,7 +318,7 @@ class Ubot(dbus.service.Object):
     @dbus.service.method(dbus_interface='net.seveas.ubot',
                          in_signature='s', out_signature='as')
     def list_channels(self, nick):
-        nick = ubot.rfc2812.IrcString(nick)
+        nick = ubot.irc.IrcString(nick)
         return [x.name for x in self.channels.values() if nick in x.nicks]
 
     # Message handlers
@@ -460,8 +459,8 @@ class Ubot(dbus.service.Object):
             elif mode in ('b', 'q'):
                 # TODO: We don't handle bans yet
                 pass
-            elif mode in ubot.rfc2812.channel_user_modes:
-                umode = ubot.rfc2812.channel_user_modes[mode]
+            elif mode in ubot.irc.channel_user_modes:
+                umode = ubot.irc.channel_user_modes[mode]
                 if action == '+' and umode not in channel.nicks[arg]:
                     channel.nicks[arg] += umode
                 if action == '-' and umode in channel.nicks[arg]:
@@ -509,4 +508,4 @@ _splitmode_re  = re.compile(r'^([@%+]*)([^@%+].*)$')
 def splitmode(x):
     mode, nick = _splitmode_re.match(x).groups()
     mode = mode or ''
-    return ubot.rfc2812.IrcString(nick), mode
+    return ubot.irc.IrcString(nick), mode

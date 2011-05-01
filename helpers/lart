@@ -1,7 +1,7 @@
 #!/usr/bin/python
 
 from ubot.helper import UbotResponder, UbotCommander
-from ubot.rfc2812 import IrcString
+from ubot.irc import IrcString
 import os, random, shelve
 
 class LartResponder(UbotCommander):

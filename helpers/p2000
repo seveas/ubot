@@ -1,7 +1,7 @@
 #!/usr/bin/python
 
 from ubot.helper import UbotHelper
-from ubot.rfc2812 import IrcString
+from ubot.irc import IrcString
 import collections, glib, urllib, time, re
 
 Alert = collections.namedtuple('Alert', ('date', 'time', 'who', 'region', 'text'))

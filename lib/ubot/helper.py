@@ -5,8 +5,7 @@ DBusGMainLoop(set_as_default=True)
 
 import ubot.exceptions
 import ubot.util
-from ubot.rfc2812 import IrcString
-from ubot.irc import InMessage, OutMessage
+from ubot.irc import InMessage, OutMessage, IrcString
 
 class UbotHelper(dbus.service.Object):
     def add_options(self, parser):

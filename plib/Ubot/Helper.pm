@@ -7,6 +7,7 @@ use Getopt::Long;
 use Net::DBus;
 use Net::DBus::Reactor;
 use Net::DBus::Exporter qw(net.seveas.ubot.helper);
+use Ubot::Irc;
 
 use base 'Net::DBus::Object';
 
@@ -92,14 +93,14 @@ sub get_bot {
 
 sub message_sent {
     my $self = shift;
-    my $message = Ubot::Helper::OutMessage->new(@_);
+    my $message = Ubot::Irc::OutMessage->new(@_);
     my $sub = $self->can('out_' . lc($message->{command}));
     $sub->($self, $message) if $sub;
 }
 
 sub message_received {
     my $self = shift;
-    my $message = Ubot::Helper::InMessage->new(@_);
+    my $message = Ubot::Irc::InMessage->new(@_);
     $message->{helper} = $self;
     my $sub = $self->can('_in_' . lc($message->{command}));
     $sub->($self, $message) if $sub;
@@ -296,55 +297,6 @@ sub in_privmsg {
         $c = $self->can($c);
         $c->($self, $message, $a);
     }
-}
-
-# ===== ===== ===== ===== ===== ===== ===== ===== ===== ===== ===== ===== =====
-package Ubot::Helper::InMessage;
-use strict;
-use warnings;
-use Ubot::rfc2812;
-
-sub new {
-    my ($class, $prefix, $command, $target, $params) = @_;
-    my $self = {prefix => $prefix, command => $command, params => $params, target => $target};
-    if($prefix =~ /^(.*)!(.*)@(.*)$/) {
-        $self->{nick} = $1;
-        $self->{ident} = $2;
-        $self->{host} = $3;
-    }
-    if(exists($replies{$command})) {
-        $self->{ncommand} = $command;
-        $command = $self->{command} = $replies{$command};
-    }
-    bless($self, $class);
-    return $self;
-}
-
-sub is_ctcp {
-    my ($self) = @_;
-    return ($self->{command} eq 'PRIVMSG') && ($self->{params}->[-1] =~ /^\x01.*\x01$/);
-}
-
-sub is_action {
-    my ($self) = @_;
-    return ($self->{command} eq 'PRIVMSG') && ($self->{params}->[-1] =~ /^\x01ACTION.*\x01$/);
-}
-sub reply {
-    my ($self, $message, $params) = @_;
-    my $target = $params->{private} ? $self->{nick} : $self->{target};
-    $self->{helper}->send($target, $message, $params);
-}
-
-# ===== ===== ===== ===== ===== ===== ===== ===== ===== ===== ===== ===== =====
-package Ubot::Helper::OutMessage;
-use strict;
-use warnings;
-
-sub new {
-    my ($class, $command, $params) = @_;
-    my $self = {command => $command, params => $params};
-    bless($self, $class);
-    return $self;
 }
 
 1;

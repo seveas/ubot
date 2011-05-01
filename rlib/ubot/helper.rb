@@ -2,7 +2,7 @@ require 'dbus'
 require 'digest/sha1'
 require 'ini'
 require 'optparse'
-require 'ubot/rfc2812'
+require 'ubot/irc'
 
 module Ubot
     class Helper < DBus::Object
@@ -97,7 +97,7 @@ module Ubot
         end
 
         def message_sent(command, params)
-            message = OutMessage.new(command, params)
+            message = Irc::OutMessage.new(command, params)
             command.downcase!
             if respond_to?('out_' + command)
                 call('out_' + command, message)
@@ -105,7 +105,7 @@ module Ubot
         end
 
         def message_received(prefix, command, target, params)
-            message = InMessage.new(prefix, command, target, params)
+            message = Irc::InMessage.new(prefix, command, target, params)
             message.helper = self
             command.sub!(/^(CMD|RPL)_/, '')
             command.downcase!
@@ -289,48 +289,6 @@ module Ubot
             end
         end
 
-    end
-    
-
-    class OutMessage
-        attr_reader :command, :params
-        def initialize(command, params)
-            @command = command
-            @params = params
-        end
-    end
-
-    class InMessage
-        attr_reader :prefix, :command, :target, :params, :nick, :ident, :host
-        attr_accessor :helper, :_command
-        def initialize(prefix, command, target, params)
-            @prefix = prefix
-            @command = command
-            @target = target
-            @params = params
-            if prefix =~ /^(.*)!(.*)@(.*)$/
-                @nick = $1
-                @ident = $2
-                @host = $3
-            end
-            if Rfc2812::Replies.member?(command)
-                @ncommand = @command
-                @command = Rfc2812::Replies[@command]
-            end
-        end
-
-        def is_ctcp
-            return @command == 'PRIVMSG' && @params[-1] =~ /^\x01.*\x01$/
-        end
-
-        def is_action
-            return @command == 'PRIVMSG' && @params[-1] =~ /^\x01ACTION.*\x01$/
-        end
-
-        def reply(message, action=false, private=false, slow=false)
-            target = private ? @nick : @target
-            @helper.send(target, message, action, slow)
-        end
     end
 end
 

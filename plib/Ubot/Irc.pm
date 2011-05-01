@@ -1,4 +1,4 @@
-package Ubot::rfc2812;
+package Ubot::Irc;
 use strict;
 use warnings;
 
@@ -315,5 +315,54 @@ our %nonrfc_replies = (
     '266' => 'RPL_GLOBALUSERS',
 );
 %replies = (%replies, %nonrfc_replies);
+
+# ===== ===== ===== ===== ===== ===== ===== ===== ===== ===== ===== ===== =====
+package Ubot::Irc::InMessage;
+use strict;
+use warnings;
+use Ubot::Irc;
+
+sub new {
+    my ($class, $prefix, $command, $target, $params) = @_;
+    my $self = {prefix => $prefix, command => $command, params => $params, target => $target};
+    if($prefix =~ /^(.*)!(.*)@(.*)$/) {
+        $self->{nick} = $1;
+        $self->{ident} = $2;
+        $self->{host} = $3;
+    }
+    if(exists($replies{$command})) {
+        $self->{ncommand} = $command;
+        $command = $self->{command} = $replies{$command};
+    }
+    bless($self, $class);
+    return $self;
+}
+
+sub is_ctcp {
+    my ($self) = @_;
+    return ($self->{command} eq 'PRIVMSG') && ($self->{params}->[-1] =~ /^\x01.*\x01$/);
+}
+
+sub is_action {
+    my ($self) = @_;
+    return ($self->{command} eq 'PRIVMSG') && ($self->{params}->[-1] =~ /^\x01ACTION.*\x01$/);
+}
+sub reply {
+    my ($self, $message, $params) = @_;
+    my $target = $params->{private} ? $self->{nick} : $self->{target};
+    $self->{helper}->send($target, $message, $params);
+}
+
+# ===== ===== ===== ===== ===== ===== ===== ===== ===== ===== ===== ===== =====
+package Ubot::Irc::OutMessage;
+use strict;
+use warnings;
+
+sub new {
+    my ($class, $command, $params) = @_;
+    my $self = {command => $command, params => $params};
+    bless($self, $class);
+    return $self;
+}
 
 1;

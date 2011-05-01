@@ -8,7 +8,7 @@ import dbus
 import functools
 import os
 import simplejson
-import ubot.rfc2812
+import ubot.irc
 import ubot.util
 
 class HttpResponseUnavailable(HttpResponse):
@@ -190,7 +190,7 @@ def channel_mode(request, bot, channel, mode=None):
 
 @control_method
 def channel_nicks(request, bot, channel):
-    n = dict([(ubot.rfc2812.IrcString(nick), mode) for nick, mode in channel.get_nicks().items()])
+    n = dict([(ubot.irc.IrcString(nick), mode) for nick, mode in channel.get_nicks().items()])
     return {'nicks': n, 'count': len(n.keys())}
 
 @control_method
