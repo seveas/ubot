@@ -52,6 +52,7 @@ class Ubot(dbus.service.Object):
         self.nick = ''
         self.connected = False
         self.server = None
+        self.server_version = None
         self.port = None
         self.synced = len(self.saved_channels) == 0
         self.tojoin = copy.deepcopy(self.saved_channels)
@@ -244,6 +245,7 @@ class Ubot(dbus.service.Object):
             'nickname': self.nick,
             'connected': self.connected,
             'server': self.server,
+            'server_version': self.server_version,
             'port': self.port,
         }
 
@@ -328,6 +330,10 @@ class Ubot(dbus.service.Object):
         self.loggedin = 2
         for c in self.saved_channels:
             self.join(c, self.passwords.get(c,''))
+
+    def handle_myinfo(self, msg):
+        if len(msg.params) >= 2:
+            self.server_version = msg.params[1]
     
     # Ping-pong with the server
     def handle_ping(self, msg):

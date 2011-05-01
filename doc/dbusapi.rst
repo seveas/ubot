@@ -97,17 +97,18 @@ Methods
 
    Returns a dictionary of information with the following keys:
 
-   ========= =========
-   Key       Signature
-   --------- ---------
-   connected b
-   master    b
-   nickname  b
-   port      i
-   server    s
-   synced    b
-   version   s
-   ========= =========
+   ============== =========
+   Key            Signature
+   -------------- ---------
+   connected      b
+   master         b
+   nickname       b
+   port           i
+   server         s
+   server_version s
+   synced         b
+   version        s
+   ============== =========
 
    New entries may be added at any time.
 
