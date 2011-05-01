@@ -179,9 +179,10 @@ module Ubot
             this.runloop = DBus::Main.new()
             this.runloop << DBus::session_bus
             this.runloop.run()
-            if this.respond_to?('exit')
-                this.exit
-            end
+            this.exit()
+        end
+
+        def exit()
         end
 
         dbus_interface 'net.seveas.ubot.helper' do

@@ -184,6 +184,9 @@ sub get_info {
     return $self->{helper_info};
 }
 
+sub exit {
+}
+
 sub run {
     my ($self) = @_;
     my %opts;
@@ -193,10 +196,7 @@ sub run {
     $self->info("helper started");
     $self->{reactor} = Net::DBus::Reactor->main();
     $self->{reactor}->run;
-    my $meth = $self->can('exit');
-    if($meth) {
-        $meth->();
-    }
+    $self->exit;
 }
 
 # ===== ===== ===== ===== ===== ===== ===== ===== ===== ===== ===== ===== =====

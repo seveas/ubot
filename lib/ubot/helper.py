@@ -134,8 +134,11 @@ class UbotHelper(dbus.service.Object):
         c.info("helper started")
         c.mainloop = gobject.MainLoop()
         c.mainloop.run()
-        if hasattr(c, 'exit'):
-            c.exit()
+        c.exit()
+
+    def exit(self):
+        # Empty method, provided for consistency, so you can call super() for it.
+        pass
 
     @dbus.service.method(dbus_interface='net.seveas.ubot.helper',
                          in_signature='', out_signature='')
