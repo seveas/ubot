@@ -28,7 +28,7 @@ class HelloResponder(UbotCommander):
         self.uppercase = opts.uppercase
 
     def hello(self, message, argument):
-        reply = "Hello, %s!" % message.prefix[:message.prefix.find('!')]
+        reply = "Hello, %s!" % message.nick
         if self.uppercase:
             reply = reply.upper()
         message.reply(reply, action=False, slow=True)

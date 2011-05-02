@@ -12,3 +12,5 @@
 * ubot.channel.set_key
 * better set_mode
 * Nicer ban handling
+* Make lart use a database
+* Notice handling

@@ -19,9 +19,8 @@ you``
 As you can see, no D-Bus programming needed, you don't even need to write a
 mainloop! All you need to write are a dictionary with information and the code
 that actually responds to the messages. The :func:`add_options` and
-:func:`parse_options` definitions are there for demonstration only, usually you
-would place this in a configuration file.
-
+:func:`handle_options` definitions are there for demonstration only, usually
+you would place this in a configuration file.
 
 The ubot.helper module
 ----------------------
@@ -59,6 +58,10 @@ helper.
 
      A dictionary that maps channel names to D-Bus proxy objects that follow
      the :doc:`D-Bus channel interface <dbusapi>`
+
+  .. attribute:: nickname
+
+     The nickname of the bot.
 
   The actual running of the helper class is accomplished by calling the
   classmethod :meth:`run`. You should not override this method. Instead, you
@@ -165,7 +168,7 @@ helper.
 
      These functions log a message via the bot with the apropriate loglevel.
 
-.. class:: UbotResponder(UbotCommander)
+.. class:: UbotResponder(UbotHelper)
 
   This class is the one to subclass if you want to respond to incoming
   messages. It inspects one additional configuration key: ``channels``. Its
@@ -192,8 +195,8 @@ helper.
    A common idiom for helpers is helpers that respond only to certain commands,
    all prefixed with the same character. This helper will read that prefix
    chracter from the configuration (key: prefix) and the addressed function
-   will only return ``True `` if the message starts with that prefix
-   character..
+   will only return ``True`` if the message starts with that prefix
+   character.
 
    .. function:: in_privmsg(self, message)
 
@@ -230,7 +233,7 @@ This module contains various IRC-related utilities and protocol-specific classes
 
      Whether a message is an action (Like /me does something)
 
-  .. function:: reply(self, message, action=Flase, private=False, slow=False)
+  .. function:: reply(self, message, action=False, private=False, slow=False)
 
      Utility function to reply to a message (works only for subclasses of
      :class:`UbotResponder`). 

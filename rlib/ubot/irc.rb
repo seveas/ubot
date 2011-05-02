@@ -384,4 +384,10 @@ Nonrfc_replies = {
     '266' =>    'RPL_GLOBALUSERS',
 }
 Replies.update(Nonrfc_replies)
+
+Channel_user_modes = {
+    'o' => '@',
+    'h' => '%',
+    'v' => '+',
+}
 end

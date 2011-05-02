@@ -1,0 +1,41 @@
+#!/usr/bin/ruby
+
+require 'ubot/helper'
+require 'ubot/irc'
+
+class HelloCommander < Ubot::Commander
+    def initialize
+        super
+        @helper_info = {
+            'name' => 'hello',
+            'description' => 'Say hello',
+            'version' => '1.0',
+            'url' => 'http://ubot.seveas.net/helpers/rb_hello',
+            'author_name' => 'Dennis Kaarsemaker',
+            'author_nick' => 'Seveas',
+            'author_network' => 'Freenode/MAGNet',
+            'author_email' => 'dennis@kaarsemaker.net',
+        }
+        @commands = {
+            Irc::IrcString.new('hello') => 'hello'
+        }
+    end
+    def add_options(parser, options)
+        super
+        options[:uppercase] = false
+        parser.on('-u', '--uppercase', 'Shout a greeting back') { |option| options[:uppercase] = true }
+    end
+    def handle_options(options, arguments)
+        super
+        @uppercase = options[:uppercase]
+    end
+    def hello(message, argument)
+        reply = "Hello, %s!" % message.prefix[0,message.nick]
+        if @uppercase:
+            reply.upcase!
+        end
+        message.reply(reply)
+    end
+end
+
+HelloCommander.run()

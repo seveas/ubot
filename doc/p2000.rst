@@ -1,2 +1,63 @@
 p2000 notifier
 ==============
+
+This plugin will display p2000 (dutch emergency services messages) in channels of your choice.
+
+Example
+-------
+::
+
+  <MicroBot> Ambulance Noord-Holland Noord: A2 (NB: zeer_grote_natuurbr.) (NB.: RB Liaison)
+             (GG: ANH-INCI-1) Bosbuffet de Berekuil SCHOORLSE ZEEWEG X SCHOORL Bosbrand 1871PA 2 (00:45:09)
+
+Commandline arguments
+---------------------
+This helper defines the folloing commandline arguments:
+
+============ ============================== ================================
+Argument     Default                        Meaning
+============ ============================== ================================
+-a/--address tcp\:host=localhost,port=11235 Address of the D-Bus session bus
+-n/--name    Named after the helper class   D-Bus service name of the helper
+-c/--config  No default, mandatory          Configuration file
+============ ============================== ================================
+
+Configuration keys
+------------------
+
+This helper needs the following keys in its configuration section:
+
+======== ======= =================================================
+Key      Default Meaning
+======== ======= =================================================
+channels None    In which channels should display alerts
+regions  None    The regions to check alerts for (comma-separated)
+======== ======= =================================================
+
+The following regions are supported:
+
+* Amsterdam-Amstelland
+* BrabantNoord
+* BrabantZuidOost
+* Drenthe
+* Flevoland
+* Friesland
+* Gelderland-Midden
+* Gelderland-Zuid
+* GooienVechtstreek
+* Groningen
+* Haaglanden
+* HollandsMidden
+* IJsselland
+* Kennemerland
+* LimburgNoord
+* LimburgZuid
+* MiddenenWestBrabant
+* Noord-enOostGelderland
+* Noord-HollandNoord
+* RotterdamRijnmond
+* Twente
+* Utrecht
+* Zaanstreek-Waterland
+* Zeeland
+* ZuidHollandZuid
