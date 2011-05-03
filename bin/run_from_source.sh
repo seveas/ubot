@@ -42,7 +42,17 @@ for conf in $(find "$prefix/etc" -type f -name '*.in'); do
     fi
 done
 
-if [ ! -e "$localstatedir/larts" ]; then cp "$prefix/data/lart/larts" "$localstatedir"; fi
+for datadir in lart mess; do
+    if [ ! -e "$localstatedir/ubot/$datadir" ]; then
+        mkdir "$localstatedir/ubot/$datadir"
+    fi
+    for file in "$prefix/data/$datadir/"*;  do
+        file=${file#$prefix/data/$datadir}
+        if [ ! -e "$localstatedir/ubot/$datadir/$file" ]; then
+            cp "$prefix/data/$datadir/$file" "$localstatedir/ubot/$datadir/$file"
+        fi
+    done
+done
 
 if [ -z "$PYTHONPATH" ]; then
     PYTHONPATH="$libdir"

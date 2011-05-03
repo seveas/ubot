@@ -1,11 +1,11 @@
 [lart]
 prefix   = @
-larts    = @LOCALSTATEDIR@/ubot/larts
+larts    = @LOCALSTATEDIR@/ubot/lart/larts
 channels = #seveas
 botname  = ubot
 
 [lart2]
 prefix   = %
-larts    = @LOCALSTATEDIR@/ubot/larts
+larts    = @LOCALSTATEDIR@/ubot/lart/larts
 channels = #microbot
 botname  = ubot

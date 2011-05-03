@@ -18,7 +18,8 @@ class LartResponder(UbotCommander):
     commands = {
         IrcString('lart'): 'lart',
         IrcString('slander'): 'lart',
-        IrcString('pity'): 'lart',
+        IrcString('slander'): 'lart',
+        IrcString('smite'): 'lart',
     }
 
     def handle_options(self, opts, args):
