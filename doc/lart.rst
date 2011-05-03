@@ -41,6 +41,7 @@ Commands
 * @lart <target>
 * @pity <target>
 * @slander <target>
+* @smite <target>
 
 Calling either of these commands sends a nastygram to the target to punish him
 for doing something stupid. But beware, it can backfire too!

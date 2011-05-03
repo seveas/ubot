@@ -6,7 +6,8 @@ may be available on http://ubot.seveas.net
 
 .. toctree::
 
-  lart
   isup
+  lart
+  mess
   noroot
   p2000

@@ -1,0 +1,138 @@
+#!/usr/bin/python
+
+import subprocess, os, random, re, urllib2
+from ubot.helper import UbotCommander
+from ubot.irc import IrcString as S
+
+class MessCommander(UbotCommander):
+    commands = {
+        S('t'):           ['http://4q.cc/?pid=fact&person=mrt',      r'<div id="wia_factbox">.*?<p>(?P<fact>.*?)</p>', False], 
+        S('chuck'):       ['http://4q.cc/?pid=fact&person=chuck',    r'<div id="wia_factbox">.*?<p>(?P<fact>.*?)</p>', False], 
+        S('vin'):         ['http://4q.cc/?pid=fact&person=vin',      r'<div id="wia_factbox">.*?<p>(?P<fact>.*?)</p>', False], 
+        S('bauer'):       ['http://www.notrly.com/jackbauer/',       r'<p class="fact">(?P<fact>.*?)</p>',             False], 
+        S('bruce'):       ['http://geekz.co.uk/schneierfacts/',      r'p class="fact">(?P<fact>.*?)</p',               False], 
+#        S('esr'):         ['http://geekz.co.uk/esrfacts/',           r'p class="fact">(?P<fact>.*?)</p',               False], 
+        S('hamster'):     ['http://hamsterrepublic.com/dyn/bobsez',  r'<font.*?<b>\s*(?P<fact>.*?)</b>',               False], 
+        S('bush'):        ['http://www.dubyaspeak.com/random.phtml', r'<td valign.*?>(?P<fact>.*?)</td>',              True],
+        S('dubya'):       ['http://www.dubyaspeak.com/random.phtml', r'<td valign.*?>(?P<fact>.*?)</td>',              True],
+        S('mjg'):         ['http://www.angryfacts.com',              r'</p><h1>(?P<fact>.*?)</h1>',                    False], 
+        S('mjg59'):       ['http://www.angryfacts.com',              r'</p><h1>(?P<fact>.*?)</h1>',                    False], 
+        S('vmjg'):        ['http://www.rjek.com/vmjg59.cgi',         r'<body>(?P<fact>.*?)<p>',                        True],
+        S('vmjg59'):      ['http://www.rjek.com/vmjg59.cgi',         r'<body>(?P<fact>.*?)<p>',                        True],
+        S('shakespeare'): ['http://www.pangloss.com/seidel/Shaker/', r'<font.*?>(?P<fact>.*?)</font>',                 False], 
+#        S('limerick'):    ['http://limerickdb.com/?random2',         r'<div class="quote_output">\s*(?P<fact>.*?)\s*</div', False], 
+
+        S('bofh'):        ['bofh.txt',    'BOFH Excuse of the day: ',    False], 
+        S('42'):          ['42.txt',      '',                            False], 
+        S('magic8ball'):  ['ball.txt',    '',                            False], 
+        S('ferengi'):     ['ferengi.txt', 'Ferengi rule of acquisition', False],
+        S('ralph'):       ['ralph.txt',   '',                            False],
+
+        S('dice'):        ['dice',     False],
+        S('fortune'):     ['fortune',  False],
+        S('ofortune'):    ['ofortune', True],
+        S('futurama'):    ['futurama', False],
+        S('pony'):        ['pony',     False],
+    }
+
+    def handle_options(self, options, args):
+        super(MessCommander, self).handle_options(options, args)
+        self.offensive = self.conf.get(self.name, 'offensive').split(',')
+        self.data = self.conf.get(self.name, 'data')
+        for command in self.commands.values():
+            if len(command) != 3:
+                continue
+            if command[0].startswith('http'):
+                command[1] = re.compile(command[1], re.I|re.DOTALL)
+            else:
+                with open(os.path.join(self.data, command[0])) as fd:
+                    command[0] = fd.read().splitlines()
+
+    def addressed(self, message):
+        if not super(MessCommander, self).addressed(message):
+            return False
+        command, arg = message._command
+        return message.target in self.offensive or not self.commands[command][-1]
+
+    def in_privmsg(self, message):
+        if not self.addressed(message):
+            return
+
+        command, arg = message._command
+
+        if len(self.commands[command]) == 2:
+            func = getattr(self, self.commands[command][0])
+            if func.func_code.co_argcount == 2:
+                msg = func(arg)
+            else:
+                msg = func()
+            for line in msg.split('\n'):
+                message.reply(line, slow=True)
+
+        source, ext = self.commands[command][:2]
+        if type(source) == list:
+            message.reply(ext + random.choice(source), slow=True)
+            return
+
+        for i in range(5):
+            try:
+                inp = urllib2.urlopen(source).read()
+                out = ext.search(inp).group('fact')
+            except Exception, e:
+                self.warning("Failed to download/parse %s" % source)
+                break
+            out = filter(out, message.target in self.offensive)
+            if out:
+                message.reply(out, slow=True)
+                break
+
+    def dice(self, count): 
+        """Roll a number of dice"""
+        try:
+            count = int(count)
+        except:
+            count = 5
+        count = min(5,max(1,count))
+        return u' '.join([x.__call__([u"\u2680",u"\u2681",u"\u2682",u"\u2683",u"\u2684",u"\u2685"])
+                             for x in [random.choice]*count])
+
+    def pony(self, who):
+        """Can we have a pony?"""
+        if not who:
+            who = 'you'
+        return "No, %s can't have a pony!" % who.strip()
+
+    def fortune(self, offensive=False):
+        """Display fortune cookies"""
+        arg = offensive and '-so' or '-s'
+        return subprocess.Popen(['/usr/games/fortune', arg], stdout=subprocess.PIPE).communicate()[0]
+
+    def ofortune(self):
+        """Display (possibly offensive) fortune cookies"""
+        return self.fortune(True)
+
+    def futurama(self):
+        """Futurama quotes from slashdots HTTP headers"""
+        u = urllib2.urlopen('http://slashdot.org')
+        h = [x for x in u.headers.headers if x.startswith('X') and not x.startswith('X-Powered-By')][0]
+        return h[2:].strip().replace(' ',' "',1) + '"'
+
+# Rudimentary badwords filter and html cleanup
+badwords = ['frk','znfgheongr','shpx','encr','qvpx','chffl','cebfgvghgr','ubbxre',
+            'betnfz','fcrez','phag','cravf','fuvg','cvff','heva','ovgpu','frzra','pbpx',
+            'ergneq', 'pnapre', 'uvi', 'nvqf', 'nff', 'gvg']
+badwords = [x.encode('rot13') for x in badwords]
+tagre = re.compile(r'<.*?>')
+def filter(txt, off):
+    if not off:
+        for b in badwords:
+            if b in _txt:
+                return None
+    txt = txt.replace('<br />',' ')
+    txt = txt.replace('<i>','/').replace('</i>','/').replace('<b>','*').replace('</b>','*')
+    txt = txt.replace('&quot;','"').replace('&lt;','<').replace('&gt;','>')
+    txt = tagre.sub('',txt)
+    txt = re.sub('\s+',' ',txt)
+    return txt.strip()
+
+MessCommander.run()

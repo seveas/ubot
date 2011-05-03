@@ -1,0 +1,6 @@
+[mess]
+prefix   = @
+data     = @LOCALSTATEDIR@/ubot/mess/
+channels = #microbot,#microbot-off
+offensive = #microbot-off
+botname  = ubot
