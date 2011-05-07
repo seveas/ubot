@@ -100,9 +100,9 @@ INSTALLED_APPS = (
     'ubot.web.control',
 )
 
+LOGIN_URL = '/login/'
+LOGIN_REDIRECT_URL = '/'
+
 # Try to find a dbus service
 if not os.environ.get('DBUS_SESSION_BUS_ADDRESS',None):
     os.environ['DBUS_SESSION_BUS_ADDRESS'] = 'tcp:host=localhost,port=11235'
-
-# Default botname is ubot
-UBOT_BOTNAME = 'ubot'

@@ -1,18 +1,12 @@
-<!DOCTYPE html>
-<html lang="en">
-  <head>
-    <link rel="stylesheet" type="text/css" href="{{ MEDIA_URL }}ubot/redmond/jquery-ui-1.8.11.custom.css" />
-    <link rel="stylesheet" type="text/css" href="{{ MEDIA_URL }}ubot/ubot.css" />
-    <script type="text/javascript" src="//ajax.googleapis.com/ajax/libs/jquery/1.5.1/jquery.min.js"></script>
-    <script type="text/javascript" src="//ajax.googleapis.com/ajax/libs/jqueryui/1.8.11/jquery-ui.min.js"></script>
+{% extends "ubot/control/base.html" %}
+{% block extrahead %}
     <script type="text/javascript" src="{{ MEDIA_URL }}ubot/cookie.js"></script>
     <script type="text/javascript" src="{{ MEDIA_URL }}ubot/ubot.js"></script>
     <script type="text/javascript">
-        ubot.initialize('{{ UBOT_BOTNAME }}');
+        ubot.initialize('{{ bot }}');
     </script>
-    <title>Ubot control interface</title>
-  </head>
-  <body>
+{% endblock %}
+{% block content %}
     <div id="channels-widget"  class="ub-widget ui-widget ui-widget-content ui-helper-clearfix ui-corner-all">
       <div class="ub-title ui-widget-header ui-corner-all">Channels</div>
       <div id="channels">
@@ -66,5 +60,4 @@
         <dd id="nickname">&nbsp;</dd>
       </dl>
     </div>
-  </body>
-</html>
+{% endblock %}

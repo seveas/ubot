@@ -81,15 +81,15 @@ def control_method(meth):
     return wrapper
 
 @user_passes_test(lambda user: user.has_perm('ubot_control'))
-def index(request):
-    ctx = RequestContext(request, {'UBOT_BOTNAME': settings.UBOT_BOTNAME})
-    return render_to_response('ubot/control/index.html', context_instance=ctx)
+def bot(request, bot):
+    ctx = RequestContext(request, {'bot': bot})
+    return render_to_response('ubot/control/bot.html', context_instance=ctx)
 
 @control_method
 def start_bot(request, botname):
     try:
         bus = dbus.SessionBus().get_object('org.freedesktop.DBus', '/org/freedesktop/DBus')
-        bus.StartServiceByName('net.seveas.ubot.' + settings.UBOT_BOTNAME, dbus.types.UInt32(0))
+        bus.StartServiceByName('net.seveas.ubot.' + botname, dbus.types.UInt32(0))
     except:
         # Ignore errors, retries will be attempted
         pass
@@ -126,9 +126,9 @@ def say(request, bot, target, message):
 def raw(request, bot):
     pass
 
-blacklisted_names = ('org.freedesktop.DBus','net.seveas.ubot.' + settings.UBOT_BOTNAME)
 @control_method
 def helpers(request, bot):
+    blacklisted_names = ('org.freedesktop.DBus', bot.requested_bus_name)
     bus = dbus.SessionBus().get_object('org.freedesktop.DBus','/org/freedesktop/DBus')
     helpers = dict([(x, False) for x in bus.ListActivatableNames() if x not in blacklisted_names])
     helpers.update(dict(bot.get_helpers()))
@@ -144,6 +144,7 @@ def stop_helper(request, bot, helper):
 
 @control_method
 def start_helper(request, bot, helper):
+    blacklisted_names = ('org.freedesktop.DBus', bot.requested_bus_name)
     bus = dbus.SessionBus().get_object('org.freedesktop.DBus','/org/freedesktop/DBus')
     helpers = dict([(x, False) for x in bus.ListActivatableNames() if x not in blacklisted_names])
     helpers.update(dict(bot.get_helpers()))

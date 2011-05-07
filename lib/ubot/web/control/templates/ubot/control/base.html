@@ -1,0 +1,16 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <link rel="stylesheet" type="text/css" href="{{ MEDIA_URL }}ubot/redmond/jquery-ui-1.8.11.custom.css" />
+    <link rel="stylesheet" type="text/css" href="{{ MEDIA_URL }}ubot/ubot.css" />
+    <script type="text/javascript" src="//ajax.googleapis.com/ajax/libs/jquery/1.5.1/jquery.min.js"></script>
+    <script type="text/javascript" src="//ajax.googleapis.com/ajax/libs/jqueryui/1.8.11/jquery-ui.min.js"></script>
+    {% block extrahead %}
+    {% endblock %}
+    <title>{% block title %}Ubot control interface{% endblock %}</title>
+  </head>
+  <body>
+    {% block content %}
+    {% endblock %}
+  </body>
+</html>

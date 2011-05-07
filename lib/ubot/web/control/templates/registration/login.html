@@ -1,0 +1,49 @@
+{% extends "ubot/control/base.html" %}
+
+{% block extrahead %}
+    <script type="text/javascript">
+        $(document).ready(function() { $('button, .button').button(); });
+    </script>
+{% endblock %}
+
+{% block title %}Login{% endblock %}
+{% block content %}
+
+    <div id="control-widget"  class="ub-widget ui-widget ui-widget-content ui-helper-clearfix ui-corner-all">
+      <div class="ub-title ui-widget-header ui-corner-all">Login</div>
+      <div id="control">
+        {% if form.errors %}
+          <div class="ui-widget" "alarm">
+            <div class="ui-state-error ui-corner-all" style="padding: 0 .7em;">
+              <p>
+                <span class="ui-icon ui-icon-alert" style="float: left; margin-right: .3em;"></span>
+                Username or password incorrect
+              </p>
+            </div>
+          </div>
+        {% endif %}
+        <form method="post" action="{% url django.contrib.auth.views.login %}">
+          {% csrf_token %}
+          <table>
+            <tr>
+              <td>{{ form.username.label_tag }}</td>
+              <td>{{ form.username }}</td>
+            </tr>
+            <tr>
+              <td>{{ form.password.label_tag }}</td>
+              <td>{{ form.password }}</td>
+            </tr>
+          </table>
+          <input type="submit" class="button" value="Login" />
+          <input type="hidden" name="next" value="{{ next }}" />
+        </form>
+      </div>
+    </div>
+
+    <img id="robot" src="{{ MEDIA_URL }}ubot/blue_robot.png" />
+    <div id="footer" class="ui-widget-header">
+      <dl>
+        <dt>µbot web interface</dt>
+      </dl>
+    </div>
+{% endblock %}

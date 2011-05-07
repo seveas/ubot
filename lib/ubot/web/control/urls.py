@@ -26,4 +26,6 @@ urlpatterns = patterns('ubot.web.control.views',
     (r'^rest/(?P<bot>[A-Za-z0-9]+)/channel/(?P<channel>[^/]+)/nicks/$', 'channel_nicks'),
     (r'^rest/(?P<bot>[A-Za-z0-9]+)/channel/(?P<channel>[^/]+)/invite/$', 'channel_invite'),
     (r'^rest/(?P<bot>[A-Za-z0-9]+)/channel/(?P<channel>[^/]+)/kick/$', 'channel_kick'),
+
+    (r'^(?P<bot>[a-zA-Z0-9_]+)/$', 'bot'),
 )

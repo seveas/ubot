@@ -1,10 +1,17 @@
 from django.conf.urls.defaults import *
 from django.conf import settings
+from django.http import HttpResponseRedirect
 
 from django.contrib import admin
 admin.autodiscover()
 
 urlpatterns = patterns('',
+    # By default, go to the control interface
+    (r'^$', lambda request: HttpResponseRedirect('control/')),
+
+    # Authentication
+    (r'^login/', 'django.contrib.auth.views.login'),
+
     # Django admin documentation
     (r'^admin/doc/', include('django.contrib.admindocs.urls')),
 
