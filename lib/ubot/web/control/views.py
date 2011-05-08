@@ -1,12 +1,14 @@
 from django.conf import settings
 from django.contrib.auth.decorators import user_passes_test
-from django.http import HttpResponse, HttpResponseForbidden, HttpResponseBadRequest, HttpResponseServerError
-from django.shortcuts import render_to_response
+from django.http import HttpResponse, HttpResponseForbidden, HttpResponseBadRequest, HttpResponseServerError, Http404
+from django.shortcuts import render_to_response, get_object_or_404
 from django.template import RequestContext
+from ubot.web.control.models import Bot
 import ConfigParser
 import dbus
 import functools
 import os
+import re
 import simplejson
 import ubot.irc
 import ubot.util
@@ -21,9 +23,10 @@ class JsonResponse(HttpResponse):
 def control_method(meth):
     @functools.wraps(meth)
     def wrapper(request, *args, **kwargs):
-        # Check authentication
-        if not request.user.has_perm('ubot_control'):
-            return HttpResponseForbidden("No access")
+        if 'bot' in kwargs:
+            bot = get_object_or_404(Bot,name=kwargs['bot'])
+            if not bot.has_access(request.user):
+                return HttpResponseForbidden("No access")
 
         try:
             dbus.SessionBus()
@@ -80,8 +83,29 @@ def control_method(meth):
 
     return wrapper
 
-@user_passes_test(lambda user: user.has_perm('ubot_control'))
+def index(request):
+    # Create bot objects for live or activatable bots
+    try:
+        bus = dbus.SessionBus()
+    except:
+        return HttpResponseServerError("The dbus daemon at %s is not running or not accessible. Start dbus and retry." % os.environ['DBUS_SESSION_BUS_ADDRESS'])
+    bus = bus.get_object('org.freedesktop.DBus','/org/freedesktop/DBus')
+    active = bus.ListNames()
+    for name in bus.ListActivatableNames() + active:
+        m = re.match(r'^net\.seveas\.ubot\.([a-zA-Z0-9_]+)$', name)
+        if m:
+            Bot.objects.get_or_create(name=m.group(1))
+    bots = list(Bot.objects.all())
+    for b in bots:
+        b.active = ('net.seveas.ubot.' + b.name) in active
+        b.state = ['off','on'][b.active]
+    ctx = RequestContext(request, {'bots': bots})
+    return render_to_response('ubot/control/index.html', context_instance=ctx)
+
 def bot(request, bot):
+    bot = get_object_or_404(Bot, name=bot)
+    if not bot.has_access(request.user):
+        return HttpResponseForbidden("No access")
     ctx = RequestContext(request, {'bot': bot})
     return render_to_response('ubot/control/bot.html', context_instance=ctx)
 
