@@ -1,0 +1,29 @@
+#!/usr/bin/python
+
+from ubot.helper import UbotHelper
+
+class PmRelay(UbotHelper):
+    helper_info = {
+        'name': 'PM relay',
+        'description': 'Relay private messages to a channel',
+        'version': "1.0",
+        'url': 'http://ubot.seveas.net/helpers/pm_relay',
+        'author_name': 'Dennis Kaarsemaker',
+        'author_nick': 'Seveas',
+        'author_network': 'Freenode/MAGNet',
+        'author_email': 'dennis@kaarsemaker.net',
+    }
+
+    def handle_options(self, opts, args):
+        super(PmRelay, self).handle_options(opts, args)
+        self.channel = self.conf.get(self.name, 'channel')
+
+    def addressed(self, message):
+        return message.target == self.nickname
+
+    def in_privmsg(self, message):
+        if self.addressed(message):
+            msg = message.params[0]
+            self.channels[self.channel].say("<%s> %s" % (message.nick, msg))
+
+PmRelay.run()
