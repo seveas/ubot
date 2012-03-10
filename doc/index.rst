@@ -8,7 +8,7 @@ While µbot itself is tiny, it takes a unique approach to extending: where
 traditionally added functionality is written as plugins, or dynamically loaded
 modules, µbot's helpers all run in separate processes.
 
-These processes communicatee with the bot via D-Bus and can thus be managed
+These processes communicate with the bot via D-Bus and can thus be managed
 completely separately. This decoupling, and the libraries shipped with µbot
 make it very easy to add functionality. You can even write helpers in
 completely different language, as long as there are D-Bus bindings!

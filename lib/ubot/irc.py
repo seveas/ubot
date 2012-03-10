@@ -23,7 +23,7 @@ def try_connect(servers):
         try:
             family, socktype, proto, canonname, sockaddr = socket.getaddrinfo(server, port, socket.AF_INET, socket.SOCK_STREAM)[0]
         except socket.gaierror, e:
-            logger.error("Failed (%d) %s" % (e[0], e[1]))
+            logger.error("Failed to connect: %s" % str(e))
             continue
         try:
             sock = socket.socket(family, socktype, proto)
@@ -34,11 +34,11 @@ def try_connect(servers):
                 try:
                     sock = ssl.wrap_socket(sock)
                 except ssl.error, e:
-                    log.error("Failed: (%d) %s" % (e[0], e[1]))
+                    logger.error("Failed to connect: %s" % str(e))
                     continue
             return sock, server, port
         except socket.error, e:
-            logger.error("Failed: (%d) %s" % (e[0], e[1]))
+            logger.error("Failed to connect: %s" % str(e))
     return (None, None, None)
 
 class IrcConnection(object):
@@ -417,7 +417,7 @@ nargs_out = {
     s('WALLOPS'): 0,
 }
 nargs_in = {
-    s('JOIN'):     0,
+    s('JOIN'):     1,
     s('PONG'):     1,
     s('NOTICE'):   1,
     s('PRIVMSG'):  1,

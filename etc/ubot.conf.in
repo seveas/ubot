@@ -7,7 +7,7 @@ server1 = irc.freenode.net
 password = Wahoonie.
 priority    = 2
 realname    = ubot
-controlchan = #seveas
+controlchan = #microbot
 
 [peer1]
 nickmatch = MicroBot2(`|_)?!(n|i)=ubot@no_where

@@ -1,0 +1,32 @@
+{% extends "ubot/control/base.html" %}
+
+{% block content %}
+
+    <div id="control-widget"  class="ub-widget ui-widget ui-widget-content ui-helper-clearfix ui-corner-all">
+      <div class="ub-title ui-widget-header ui-corner-all">µbot control</div>
+      <div id="control">
+        <table style="width: 100%">
+            {% for bot in bots %}
+            <tr>
+              <td><a href="./{{ bot.name }}/">{{ bot.name }}</a></td>
+              <td>
+                <span class="sliderswitch_container">
+                    <img class="sliderswitch" src="{{ MEDIA_URL }}/ubot/switch_container_{{ bot.state }}.png"
+                      {% if not bot.active %}style="background-position: -27px"{% endif %}>
+                </span>
+              </td>
+            </tr>
+            {% empty %}
+            <tr><td>No bots have been defined yet</td></tr>
+            {% endfor %}
+        </table>
+      </div>
+    </div>
+
+    <img id="robot" src="{{ MEDIA_URL }}ubot/blue_robot.png" />
+    <div id="footer" class="ui-widget-header">
+      <dl>
+        <dt>µbot web interface</dt>
+      </dl>
+    </div>
+{% endblock %}

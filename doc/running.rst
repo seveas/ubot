@@ -47,13 +47,13 @@ passphrase.
 ::
   dennis@lightning:~/code/ubot-1$ bin/ubot-send get_channels
   Calling get_channels with arguments []
-  dbus.Array([dbus.String(u'#microbot'), dbus.String(u'#seveas')], signature=dbus.Signature('s'))
+  dbus.Array([dbus.String(u'#microbot'), dbus.String(u'#microbot-off')], signature=dbus.Signature('s'))
   dennis@lightning:~/code/ubot-1$ bin/ubot-send  join '#microbot-test' ''
   Calling join with arguments ['#microbot-test', '']
   None
   dennis@lightning:~/code/ubot-1$ bin/ubot-send get_channels
   Calling get_channels with arguments []
-  dbus.Array([dbus.String(u'#microbot-test'), dbus.String(u'#microbot'), dbus.String(u'#seveas')], signature=dbus.Signature('s'))
+  dbus.Array([dbus.String(u'#microbot-test'), dbus.String(u'#microbot'), dbus.String(u'#microbot-off')], signature=dbus.Signature('s'))
 
 As you can see, it is a very thin layer above the code, so this is not
 recommended for daily use. However, it is useful for integrating with

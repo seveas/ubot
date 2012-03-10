@@ -16,3 +16,4 @@
 * Better way of handling multiple bots on the same D-Bus
   * Web interface will list them as helpers
   * Maybe plugins should have a bots setting instead of bot. Or a per-bot section
+* Proper installer that plays nicely with cpan/pypi/deb/rpm. No gems.
