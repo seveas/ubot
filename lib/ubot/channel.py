@@ -52,12 +52,14 @@ class Channel(dbus.service.Object):
     @dbus.service.method(dbus_interface='net.seveas.ubot.channel',
                          in_signature='s', out_signature='')
     def invite(self, nick):
-        self.ircconnection.send(ubot.irc.OutMessage('INVITE', [self.name, nick]))
+        self.ircconnection.send(ubot.irc.OutMessage('INVITE', [nick, self.name]))
 
     @dbus.service.method(dbus_interface='net.seveas.ubot.channel',
                          in_signature='as', out_signature='')
     def set_mode(self, modeargs):
-        self.ircconnection.send(ubot.irc.OutMessage('MODE', [self.name, modeargs]))
+        modeargs = [str(x) for x in modeargs]
+        print "XXX", modeargs
+        self.ircconnection.send(ubot.irc.OutMessage('MODE', [self.name] +modeargs))
 
     @dbus.service.method(dbus_interface='net.seveas.ubot.channel',
                          in_signature='', out_signature='as')

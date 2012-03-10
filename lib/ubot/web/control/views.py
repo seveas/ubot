@@ -1,5 +1,5 @@
 from django.conf import settings
-from django.contrib.auth.decorators import user_passes_test
+from django.contrib.auth.decorators import login_required
 from django.http import HttpResponse, HttpResponseForbidden, HttpResponseBadRequest, HttpResponseServerError, Http404
 from django.shortcuts import render_to_response, get_object_or_404
 from django.template import RequestContext
@@ -83,6 +83,7 @@ def control_method(meth):
 
     return wrapper
 
+@login_required
 def index(request):
     # Create bot objects for live or activatable bots
     try:

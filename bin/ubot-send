@@ -29,6 +29,8 @@ os.environ['DBUS_SESSION_BUS_ADDRESS'] = 'tcp:host=%s,port=%d' % (opts.host, opt
 bus = dbus.SessionBus()
 command = args[0]
 args = args[1:]
+if command == 'set_mode':
+    args = [args]
 if not opts.channel:
     bot = bus.get_object('net.seveas.ubot.' + opts.dbus_name, 
                          '/net/seveas/ubot/' + opts.dbus_name)

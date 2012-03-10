@@ -7,7 +7,8 @@ class Bot(models.Model):
     controller_groups = models.ManyToManyField(Group, verbose_name="Groups who can control the bot", blank=True)
 
     def has_access(self, user):
-        #return user.is_superuser \
+        if not user or user.is_anonymous():
+            return False
         return False \
            or user.id in self.controllers.values_list('id',flat=True) \
            or set(user.groups.values_list('id', flat=True)).intersection(set(self.controller_groups.values_list('id', flat=True)))

@@ -12,6 +12,8 @@ urlpatterns = patterns('',
     # Authentication
     (r'^login/', 'django.contrib.auth.views.login'),
 
+    (r'^logout/', 'django.contrib.auth.views.logout', {'next_page': "/"}),
+
     # Django admin documentation
     (r'^admin/doc/', include('django.contrib.admindocs.urls')),
 
