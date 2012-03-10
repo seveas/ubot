@@ -193,7 +193,7 @@ def channel_do(request, bot, channel, message):
 
 @control_method
 def channel_say(request, bot, channel, message):
-    channel.do(message)
+    channel.say(message)
 
 @control_method
 def channel_part(request, bot, channel, message):
