@@ -1,3 +1,6 @@
+docdir = $(datadir)/doc/@PACKAGE@
+doc_DATA = api.rst configuring.rst contributing.rst copying.rst dbusapi.rst helpers.rst index.rst installing.rst isup.rst lart.rst mess.rst noroot.rst p2000.rst perl.rst python.rst ruby.rst running.rst webadmin.rst Makefile
+
 # Makefile for Sphinx documentation
 #
 
@@ -128,3 +131,5 @@ doctest:
 	$(SPHINXBUILD) -b doctest $(ALLSPHINXOPTS) $(BUILDDIR)/doctest
 	@echo "Testing of doctests in the sources finished, look at the " \
 	      "results in $(BUILDDIR)/doctest/output.txt."
+
+

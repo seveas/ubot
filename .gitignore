@@ -5,3 +5,16 @@ helpers/calc
 .*.sw?
 _build
 .bzr*
+
+# Autotools byproducts
+config.status
+configure
+Makefile
+Makefile.am
+Makefile.in
+aclocal.m4
+autom4te.cache
+config.log
+install-sh
+missing
+py-compile
