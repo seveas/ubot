@@ -18,3 +18,5 @@ config.log
 install-sh
 missing
 py-compile
+autoconf.py
+substvars.sh

@@ -72,3 +72,76 @@ class UbotPeer(object):
 
     def isme(self, msg):
         return self.nickmatch.match(msg.prefix) != None
+
+def configure(conffile):
+    import ubot.autoconf as autoconf
+    import shutil
+    j = os.path.join
+    # Get some user input
+    print "It looks like you never ran ubot before, let's get started on configuring"
+    print "I need to ask you a few questions first"
+    def ask(question, default=""):
+        sdefault = ""
+        if default:
+            sdefault = "[%s] " % default
+        return raw_input(question + '? ' + sdefault).strip() or default
+    def replace(data, vars):
+        for var in vars.keys():
+            if isinstance(vars[var], basestring):
+                data = data.replace('$' + var, vars[var])
+        return data
+
+    confdir = os.path.dirname(conffile)
+    conffile = os.path.basename(conffile)
+    botname = ask("What is the name of your bot", os.path.splitext(conffile)[0])
+    datadir = os.path.expanduser(ask("Where do you want to store the bot's data", "~/.local/share/ubot/"))
+    server = ask("Which server will you connect to", "irc.freenode.net")
+    password = ask("What is your password on that server")
+    controlchannel = ask("Which channel will you be using to control the bot")
+    commandchar = ask("Which character do you want to use as a prefix for commands", "@")
+
+    vars = locals()
+
+    # Create some directories
+    if not os.path.exists(confdir):
+        os.makedirs(confdir)
+    if not os.path.exists(os.path.join(confdir, 'services')):
+        os.makedirs(os.path.join(confdir, 'services'))
+    if not os.path.exists(datadir):
+        os.makedirs(datadir)
+
+    # First write dbus config
+    src = j(autoconf.datadir,'session.conf')
+    dst = j(confdir, 'session.conf')
+    if not os.path.exists(dst) or (ask("session.conf already exists, overwrite", "N").lower() == 'y'):
+        open(dst, 'w').write(replace(open(src).read(), vars))
+
+    # Then main bot
+    src = j(autoconf.datadir,'ubot.conf')
+    dst = j(os.path.join(confdir,conffile))
+    if not os.path.exists(dst) or (ask("%s already exists, overwrite" % conffile, "N").lower() == 'y'):
+        open(dst, 'w').write(replace(open(src).read(), vars))
+
+    # And helpers
+    for helper in os.listdir(j(autoconf.datadir, 'helpers')):
+        hd = j(autoconf.datadir, 'helpers', helper)
+        src = j(hd, '%s.conf' % helper)
+        dst = j(confdir, '%s.conf' % helper)
+        if not os.path.exists(dst):
+            open(dst, 'w').write(replace(open(src).read(), vars))
+
+        dst2 = j(confdir, 'services', '%s.service' % helper)
+        if not os.path.exists(dst2):
+            open(dst2, 'w').write("""[D-BUS Service]
+Name=net.seveas.ubot.helper.%s
+Exec=%s/%s -c %s""" % (helper, autoconf.libexecdir, helper, dst))
+
+        datafiles = [x for x in os.listdir(hd) if x != '%s.conf' % helper]
+        if datafiles:
+            if not os.path.exists(j(datadir, helper)):
+                os.mkdir(j(datadir, helper))
+            for f in datafiles:
+                src = j(hd, f)
+                dst = j(datadir, helper, f)
+                if not os.path.exists(dst):
+                    shutil.copy(src, dst)

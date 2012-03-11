@@ -15,12 +15,20 @@ parser.add_option('-c', '--config', dest='config',
                   help="Specify configfile", metavar="FILE")
 parser.add_option('-v', '--verbose', dest='verbose', action='count', default=0,
                   help='Print all messages. Use twice to see raw messages as well')
+parser.add_option('--reconfigure', dest='reconfigure', action='store_true', default=False,
+                  help="Reinitialise the bot's configuration")
 opts, args = parser.parse_args()
 if args:
     parser.error("No arguments allowed")
 
+opts.config = os.path.expanduser(opts.config)
+
+if opts.reconfigure or not os.path.exists(opts.config):
+    import ubot.conf
+    ubot.conf.configure(opts.config)
+
 os.environ['DBUS_SESSION_BUS_ADDRESS'] = os.environ.get('DBUS_STARTER_ADDRESS', opts.address)
 
-bot = ubot.bot.Ubot(ubot.conf.UbotConfig(os.path.expanduser(opts.config)))
+bot = ubot.bot.Ubot(ubot.conf.UbotConfig(opts.config))
 bot.verbose = opts.verbose
 bot.run()

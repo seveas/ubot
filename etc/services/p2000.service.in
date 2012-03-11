@@ -1,3 +1,0 @@
-[D-BUS Service]
-Name=net.seveas.ubot.helper.p2000
-Exec=@PREFIX@/helpers/p2000 -c @SYSCONFDIR@/ubot/p2000.conf

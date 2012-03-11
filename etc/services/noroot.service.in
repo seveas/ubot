@@ -1,3 +1,0 @@
-[D-BUS Service]
-Name=net.seveas.ubot.helper.noroot
-Exec=@PREFIX@/helpers/noroot -c @SYSCONFDIR@/ubot/noroot.conf

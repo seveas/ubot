@@ -1,3 +1,0 @@
-[D-BUS Service]
-Name=net.seveas.ubot.helper.pmrelay
-Exec=@PREFIX@/helpers/noroot -c @SYSCONFDIR@/ubot/pmrelay.conf

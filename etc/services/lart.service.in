@@ -1,3 +1,0 @@
-[D-BUS Service]
-Name=net.seveas.ubot.helper.lart
-Exec=@PREFIX@/helpers/lart -c @SYSCONFDIR@/ubot/lart.conf

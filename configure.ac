@@ -4,7 +4,8 @@ AM_INIT_AUTOMAKE
 AM_PATH_PYTHON([2.5])
 AC_PATH_PROG([PERL], [perl])
 AC_PATH_PROG([RUBY], [ruby])
-AC_PATH_PROG([AWK], [awk])
+AC_PROG_AWK
+AC_PROG_SED
 
 RUBYLIBDIR="${prefix}/lib/site_ruby"
 for dir1 in ${prefix}/lib/ruby ${prefix}/lib; do
@@ -18,6 +19,7 @@ AC_SUBST(RUBYLIBDIR)
 
 AC_OUTPUT(Makefile 
           bin/Makefile 
+          bin/substvars.sh
           helpers/Makefile 
           lib/Makefile
           lib/ubot/Makefile
@@ -32,4 +34,25 @@ AC_OUTPUT(Makefile
           lib/ubot/web/media/redmond/images/Makefile
           plib/Makefile
           rlib/Makefile
-          doc/Makefile)
+          doc/Makefile
+          data/Makefile
+          data/helpers/Makefile
+          data/helpers/noroot/Makefile
+          data/helpers/pmrelay/Makefile
+          data/helpers/p2000/Makefile
+          data/helpers/isup/Makefile
+          data/helpers/mess/Makefile
+          data/helpers/lart/Makefile)
+
+if test "$prefix" != "/usr"; then
+    pkgdatadir=$(eval "echo $datarootdir")/ubot
+    cat <<EOF
+===========================================================================
+You have configured ubot to install into $prefix
+
+This makes is slightly difficult for python/perl/ruby to
+find the ubot libraries. Please source $pkgdatadir/ubot_env.sh
+from your ~/.bashrc to make this a bit easier.
+===========================================================================
+EOF
+fi

@@ -1,0 +1,18 @@
+#!@SHELL@
+
+prefix=@prefix@
+exec_prefix=@exec_prefix@
+pkgdatadir=@datarootdir@/@PACKAGE@
+libexecdir=@libexecdir@
+bindir=@bindir@
+RUBYLIBDIR=@RUBYLIBDIR@
+pythondir=@pythondir@
+
+@SED@ \
+    -e "s,\@pkgdatadir\@,$pkgdatadir,g" \
+    -e "s,\@libexecdir\@,$libexecdir,g" \
+    -e "s,\@bindir\@,$bindir,g" \
+    -e "s,\@pythondir\@,$pythondir,g" \
+    -e "s,\@RUBYLIBDIR\@,$RUBYLIBDIR,g" \
+    -e "s,\@prefix\@,$prefix,g" \
+    $1

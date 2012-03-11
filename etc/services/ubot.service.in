@@ -1,3 +1,0 @@
-[D-BUS Service]
-Name=net.seveas.ubot.ubot
-Exec=@PREFIX@/bin/ubot -c @SYSCONFDIR@/ubot/ubot.conf

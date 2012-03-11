@@ -1,0 +1,21 @@
+if [ -z "$PYTHONPATH" ]; then
+    PYTHONPATH="@pythondir@"
+else
+    PYTHONPATH="@pythondir@:$PYTHONPATH"
+fi
+if [ -z "$PERL5LIB" ]; then
+    PERL5LIB="@prefix@/lib/perl5"
+else
+    PERL5LIB="@prefix@/lib/perl5:$PERL5LIB"
+fi
+if [ -z "$RUBYLIB" ]; then
+    RUBYLIB="@RUBYLIBDIR@"
+else
+    RUBYLIB="@RUBYLIBDIR@:$RUBYLIB"
+fi
+if [ -z "$PATH" ]; then
+    PATH="@bindir@"
+else
+    PATH="@bindir@:$PATH"
+fi
+export PYTHONPATH PERL5LIB RUBYLIB PATH
