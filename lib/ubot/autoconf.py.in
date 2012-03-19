@@ -1,2 +1,2 @@
 datadir = "@pkgdatadir@"
-libexecdir = "@libexecdir@"
+pkglibexecdir = "@pkglibexecdir@"

@@ -493,6 +493,8 @@ class Ubot(dbus.service.Object):
         tb = '\n'.join([x.strip() for x in traceback.format_exception(type, value, tb)])
         for line in tb.split('\n'):
             self.logger.error(line)
+            if sys.stderr.isatty():
+                print >>sys.stderr, line
         if self.config.controlchan in self.channels:
             self.channels[self.config.controlchan].say("Exception occured, exiting")
             for line in tb.split('\n'):

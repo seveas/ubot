@@ -3,49 +3,148 @@
 import dbus
 import optparse
 import os
+import pprint
 import subprocess
 import ubot.bot
 import ubot.conf
+import ubot.util
 import sys
 
-sys.excepthook = None
+# sys.excepthook = None
 
-parser = optparse.OptionParser()
-parser.add_option('-a', '--address', dest='address', default='tcp:host=localhost,port=11235',
-                  help='The address of your session bus', metavar='ADDRESS')
-parser.add_option('-c', '--config', dest='config',
-                  default=os.path.join('~','.config','ubot','ubot.conf'),
-                  help="Specify configfile", metavar="FILE")
-parser.add_option('-v', '--verbose', dest='verbose', action='count', default=0,
-                  help='Print all messages. Use twice to see raw messages as well')
-parser.add_option('--reconfigure', dest='reconfigure', action='store_true', default=False,
-                  help="Reinitialise the bot's configuration")
-opts, args = parser.parse_args()
-if args:
-    parser.error("No arguments allowed")
+def main():
+    parser = optparse.OptionParser()
+    parser.add_option('-a', '--address', dest='address', default='tcp:host=localhost,port=11235',
+                      help='The address of your session bus', metavar='ADDRESS')
+    parser.add_option('-c', '--config', dest='config',
+                      default=os.path.join('~','.config','ubot','ubot.conf'),
+                      help="Specify configfile", metavar="FILE")
+    parser.add_option('-C', '--channel', dest='channel', default=None,
+                      help="The channel to send a message to")
+    parser.add_option('-v', '--verbose', dest='verbose', action='count', default=0,
+                      help='Print all messages. Use twice to see raw messages as well')
+    parser.add_option('--reconfigure', dest='reconfigure', action='store_true', default=False,
+                      help="Reinitialise the bot's configuration")
+    opts, args = parser.parse_args()
 
-opts.config = os.path.expanduser(opts.config)
+    opts.config = os.path.expanduser(opts.config)
 
-if opts.reconfigure or not os.path.exists(opts.config):
-    import ubot.conf
-    ubot.conf.configure(opts.config)
+    if opts.reconfigure or not os.path.exists(opts.config):
+        import ubot.conf
+        ubot.conf.configure(opts.config)
 
-os.environ['DBUS_SESSION_BUS_ADDRESS'] = os.environ.get('DBUS_STARTER_ADDRESS', opts.address)
+    os.environ['DBUS_SESSION_BUS_ADDRESS'] = os.environ.get('DBUS_STARTER_ADDRESS', opts.address)
 
-try:
-    dbus.SessionBus()
-except dbus.exceptions.DBusException, e:
-    if e.get_dbus_name() != 'org.freedesktop.DBus.Error.NoServer':
-        raise
-    print "DBUS daemon not running, attempting to start"
-    out = subprocess.Popen(["/usr/bin/dbus-launch",
-        "--config-file", os.path.join(os.path.dirname(opts.config), "session.conf")], stdout=subprocess.PIPE).communicate()[0]
-    for line in out.split("\n"):
-        if not line.strip():
-            continue
-        key, val = line.strip().split("=", 1)
-        os.environ[key] = val
+    if not args or args == ['start']:
+        start_bot(opts)
+    elif args[0] == 'send':
+        send_message(opts, args[1:])
+    elif args[0] == 'start':
+        start_helpers(opts, args[1:])
+    else:
+        parser.error("Unknown command: %s" % args[0])
 
-bot = ubot.bot.Ubot(ubot.conf.UbotConfig(opts.config))
-bot.verbose = opts.verbose
-bot.run()
+def start_bot(opts):
+    try:
+        dbus.SessionBus()
+    except dbus.exceptions.DBusException, e:
+        if e.get_dbus_name() != 'org.freedesktop.DBus.Error.NoServer':
+            raise
+        print "DBUS daemon not running, attempting to start"
+        out = subprocess.Popen(["/usr/bin/dbus-launch",
+            "--config-file", os.path.join(os.path.dirname(opts.config), "session.conf")], stdout=subprocess.PIPE).communicate()[0]
+        for line in out.split("\n"):
+            if not line.strip():
+                continue
+            key, val = line.strip().split("=", 1)
+            os.environ[key] = val
+
+    bot = ubot.bot.Ubot(ubot.conf.UbotConfig(opts.config))
+    bot.verbose = opts.verbose
+    ubot.util.become_daemon()
+    bot.run()
+
+def send_message(opts, args):
+    def error(msg):
+        print >>sys.stderr, msg
+        sys.exit(1)
+
+    conf = ubot.conf.UbotConfig(opts.config)
+    bus = dbus.SessionBus()
+
+    if not args:
+        print >>sys.stderr, "No command specified"
+        sys.exit(1)
+
+    command = args[0]
+    args = args[1:]
+    if command == 'set_mode':
+        args = [args]
+
+    result = None
+    try:
+        bot = bus.get_object('net.seveas.ubot.' + conf.busname,
+                             '/net/seveas/ubot/' + conf.busname)
+        if not opts.channel:
+            print "Calling %s with arguments %s" % (command, unicode(args))
+
+            if command != 'rawmsg':
+                result = getattr(bot, command)(*args, **{'dbus_interface': 'net.seveas.ubot.bot'})
+            else:
+                result = getattr(bot, command)(args[0], args[1:], **{'dbus_interface': 'net.seveas.ubot.bot'})
+        else:
+            channels = bot.get_channels()
+            if opts.channel not in channels:
+               error("No such channel: %s" % opts.channel)
+            chan = bus.get_object('net.seveas.ubot.' + conf.busname,
+                                  '/net/seveas/ubot/%s/channel/%s' % (conf.busname, ubot.util.escape_object_path(opts.channel)))
+            print "Calling %s in %s with arguments %s" % (command, opts.channel, unicode(args))
+            result = getattr(chan, command)(*args, **{'dbus_interface': 'net.seveas.ubot.channel'})
+    except TypeError:
+        error("Incorrect number of arguments for %s" % command)
+    except dbus.exceptions.DBusException, e:
+        exc = e.get_dbus_name()
+        if exc == 'org.freedesktop.DBus.Error.UnknownMethod':
+            error("No such method: %s" % command)
+        else:
+            print exc
+            raise
+    if result is not None:
+        pprint.pprint(undbus(result))
+
+def start_helpers(opts, helpers):
+    conf = ubot.conf.UbotConfig(opts.config)
+    bus = dbus.SessionBus()
+
+    bot = bus.get_object('net.seveas.ubot.' + conf.busname,
+                         '/net/seveas/ubot/' + conf.busname)
+    bus = bus.get_object('org.freedesktop.DBus','/org/freedesktop/DBus')
+
+    active = dict([(x[0].rsplit('.',1)[1], x[0]) for x in bot.get_helpers()])
+    blacklisted_names = ('org.freedesktop.DBus', conf.busname)
+    inactive = dict([(x.rsplit('.',1)[1],x) for x in undbus(bus.ListActivatableNames()) if x not in active and x not in blacklisted_names])
+    for helper in helpers:
+        if helper in active:
+            print "%s is already running" % helper
+            sys.exit(1)
+        elif helper not in inactive:
+            print "%s does not exist" % helper
+            print "All helpers: %s" % ', '.join(inactive)
+            sys.exit(1)
+        bus.StartServiceByName(inactive[helper], dbus.types.UInt32(0))
+
+def undbus(data):
+    if isinstance(data, dbus.Array):
+        return [undbus(x) for x in data]
+    if isinstance(data, dbus.Dictionary):
+        return dict([(undbus(x[0]), undbus(x[1])) for x in data.items()])
+    if isinstance(data, dbus.String):
+        return str(data)
+    if isinstance(data, dbus.Boolean):
+        return bool(data)
+    if isinstance(data, dbus.Int32):
+        return int(data)
+    return data
+
+if __name__ == '__main__':
+    main()

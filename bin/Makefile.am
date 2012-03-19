@@ -1,4 +1,4 @@
-bin_SCRIPTS = ubot ubot-send
+bin_SCRIPTS = ubot
 
 clean-local:
 	rm -f substvars.sh

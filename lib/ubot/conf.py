@@ -13,9 +13,9 @@ class UbotConfig(object):
         self.ident       = ubot.irc.IrcString('ubot')
         self.realname    = ubot.irc.IrcString('Ubot')
         self.busname     = 'ubot'
-        self.parse_config(configfile)
         self.datadir     = os.path.expanduser(os.path.join('~','.local','share','ubot'))
         self.datafile    = os.path.join(self.datadir, self.busname + '.dat')
+        self.parse_config(configfile)
 
         # Configure logging
         logging.config.fileConfig(configfile)
@@ -44,6 +44,7 @@ class UbotConfig(object):
         for opt in ('ident', 'priority', 'password', 'realname', 'busname', 'controlchan'):
             if parser.has_option('me', opt):
                 setattr(self, opt, parser.get('me', opt))
+        self.datafile = os.path.join(self.datadir, self.busname + '.dat')
         self.ident = ubot.irc.IrcString(self.ident)
         self.realname = ubot.irc.IrcString(self.realname)
         self.controlchan = ubot.irc.IrcString(self.controlchan)
@@ -94,6 +95,7 @@ def configure(conffile):
     confdir = os.path.dirname(conffile)
     conffile = os.path.basename(conffile)
     botname = ask("What is the name of your bot", os.path.splitext(conffile)[0])
+    busname = re.sub('[^a-z0-9]', '_', botname.lower())
     datadir = os.path.expanduser(ask("Where do you want to store the bot's data", "~/.local/share/ubot/"))
     server = ask("Which server will you connect to", "irc.freenode.net")
     password = ask("What is your password on that server")
@@ -134,7 +136,7 @@ def configure(conffile):
         if not os.path.exists(dst2):
             open(dst2, 'w').write("""[D-BUS Service]
 Name=net.seveas.ubot.helper.%s
-Exec=%s/%s -c %s""" % (helper, autoconf.libexecdir, helper, dst))
+Exec=%s/%s -c %s""" % (helper, autoconf.pkglibexecdir, helper, dst))
 
         datafiles = [x for x in os.listdir(hd) if x != '%s.conf' % helper]
         if datafiles:

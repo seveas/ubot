@@ -1,58 +1,21 @@
 #!/bin/bash
 #
-# Install the base config files in ~/.config and data in ~/.local/share,
-# but only if the files don't exist
+# Set up python/ruby/perl paths and dbus address so we run from source, but
+# with config used by the installed ubot.
+#
+# Any arguments given to this script are interpreted as a command to run in
+# this environment. If no arguments are given, it outputs the environment
+# variables, usable by an eval, such as
+#
+# $ eval $(bin/rub_from_source.sh)
 
-me="$0"
-cwd=$(pwd)
-if [ ${me:0:1} = '.' ]; then
-    me="$cwd${me:1}"
-fi
-if [ ${me:0:1} != '/' ]; then
-    me="$cwd/$me"
-fi
+me=$(readlink -f "$0")
 prefix=$(dirname $(dirname "$me"))
 libdir="$prefix/lib"
 plibdir="$prefix/plib"
 rlibdir="$prefix/rlib"
 sysconfdir="$HOME/.config"
 sessionconf="$sysconfdir/ubot/session.conf"
-localstatedir=$HOME/.local/share
-
-mkdir -p "$sysconfdir/ubot/services"
-for conf in $(find "$prefix/etc" -type f -name '*.in'); do
-    realconf="$sysconfdir/ubot${conf#$prefix/etc}"
-    realconf="${realconf%.in}"
-    writeconf=no
-    if [ ! -e "$realconf" ]; then
-        writeconf=yes
-    else
-        oldmd5=$(md5sum "$realconf" | cut -d' ' -f1)
-        newmd5=$(sed -e "s!@PREFIX@!$prefix!" \
-                     -e "s!@LOCALSTATEDIR@!$localstatedir!" \
-                     -e "s!@SYSCONFDIR@!$sysconfdir!" < "$conf" | md5sum | cut -d' ' -f1)
-        if [ $oldmd5 = $newmd5 ]; then
-            writeconf=yes
-        fi
-    fi
-    if [ $writeconf = "yes" ]; then
-        sed -e "s!@PREFIX@!$prefix!" \
-            -e "s!@LOCALSTATEDIR@!$localstatedir!" \
-            -e "s!@SYSCONFDIR@!$sysconfdir!" < "$conf" > "$realconf"
-    fi
-done
-
-for datadir in lart mess; do
-    if [ ! -e "$localstatedir/ubot/$datadir" ]; then
-        mkdir "$localstatedir/ubot/$datadir"
-    fi
-    for file in "$prefix/data/$datadir/"*;  do
-        file=${file#$prefix/data/$datadir}
-        if [ ! -e "$localstatedir/ubot/$datadir/$file" ]; then
-            cp "$prefix/data/$datadir/$file" "$localstatedir/ubot/$datadir/$file"
-        fi
-    done
-done
 
 if [ -z "$PYTHONPATH" ]; then
     PYTHONPATH="$libdir"
@@ -70,16 +33,10 @@ else
     RUBYLIB="$rlibdir:$RUBYLIB"
 fi
 
+DBUS_SESSION_BUS_ADDRESS=$(sed -n -e 's/^.*<listen>\(.*\)<\/listen>.*$/\1/p' < $sessionconf)
+
 export PYTHONPATH PERL5LIB RUBYLIB DBUS_SESSION_BUS_PID DBUS_SESSION_BUS_ADDRESS
 
-pid=$(pgrep -f $sessionconf)
-if [ -z "$pid" ]; then
-    eval $(dbus-launch --config-file $sessionconf)
-else
-    address=$(sed -n -e 's/^.*<listen>\(.*\)<\/listen>.*$/\1/p' < $sessionconf)
-    DBUS_SESSION_BUS_PID=$pid
-    DBUS_SESSION_BUS_ADDRESS=$address
-fi
 if [ $# != 0 ]; then
     "$@"
 else
