@@ -1,6 +1,0 @@
-autoconf.py: autoconf.py.in
-	chmod +x $(top_srcdir)/bin/substvars.sh
-	$(top_srcdir)/bin/substvars.sh $< > $@
-
-clean-local:
-	rm -f autoconf.py

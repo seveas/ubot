@@ -1,3 +1,5 @@
+EXTRA_DIST = Ubot
+
 perllibdir = $(prefix)/lib/perl5/
 
 install-data-local:

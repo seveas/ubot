@@ -1,4 +1,5 @@
 bin_SCRIPTS = ubot
+dist_bin_SCRIPTS = ubot run_from_source.sh
 
-clean-local:
+distclean-local:
 	rm -f substvars.sh

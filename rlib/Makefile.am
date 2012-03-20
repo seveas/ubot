@@ -1,3 +1,4 @@
+EXTRA_DIST = ini.rb ubot
 rubylibdir = @RUBYLIBDIR@
 
 install-data-local:

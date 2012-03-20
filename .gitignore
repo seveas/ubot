@@ -10,7 +10,6 @@ _build
 config.status
 configure
 Makefile
-Makefile.am
 Makefile.in
 aclocal.m4
 autom4te.cache
@@ -20,3 +19,5 @@ missing
 py-compile
 autoconf.py
 substvars.sh
+ubot-*
+ubot_env.sh
