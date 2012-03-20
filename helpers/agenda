@@ -1,0 +1,230 @@
+#!/usr/bin/python
+
+import datetime
+import gobject
+import icalendar
+import math
+import pytz
+from   ubot.helper import UbotCommander
+from   ubot.irc import IrcString
+import urllib2
+
+def _bool(data):
+    return data.lower() in ('1', 'true', 'yes', 'on')
+
+def parse_tz(tz):
+    if not tz:
+        return pytz.UTC
+    if 'gmt' in tz:
+        return # Avoid confusion, gmt != utc
+    # Exact matches
+    for z in pytz.common_timezones:
+        if tz.lower() == z.lower():
+            return pytz.timezone(z)
+    # Partial matches
+    for z in pytz.common_timezones:
+        if z.lower().endswith('/' + tz.lower().replace(' ','_')):
+            return pytz.timezone(z)
+
+def upcoming(events, channel):
+    now = datetime.datetime.now(pytz.UTC)
+    for event in events:
+        if event.name != 'VEVENT':
+            continue
+        if 'meeting' not in event['summary'].lower():
+            continue
+        if channel not in event['summary'].lower() + event.get('location','').lower():
+            continue
+        if event['dtend'].dt > now:
+            yield event
+            continue
+        if 'rrule' not in event:
+            continue
+
+        rule = event['rrule']
+
+        if 'until' in rule:
+            if not isinstance(rule['until'][0], datetime.datetime) and rule['until'][0] < now.date():
+                continue
+            if rule['until'][0] < now:
+                continue
+
+        if rule['freq'][0].lower() == 'weekly':
+            if 'count' in rule and event['dtend'].dt + datetime.timedelta(7*rule['count'][0]) < now:
+                continue
+
+            # Update start time
+            daydiff = math.ceil((now - event['dtend'].dt).days/7.0) * 7
+            event['dtstart'].dt += datetime.timedelta(daydiff)
+            event['dtend'].dt += datetime.timedelta(daydiff)
+            if event['dtend'].dt < now:
+                event['dtstart'].dt += datetime.timedelta(7)
+                event['dtend'].dt += datetime.timedelta(7)
+            yield event
+            continue
+
+        lastyear, lastmonth = 99999, 12
+        if rule['freq'][0].lower() == 'monthly':
+            if 'count' in rule:
+                months = rule['count'][0]
+                lastyear, lastmonth = event['dtend'].dt.year, event['dtend'].dt.month
+                lastyear += months/12
+                lastmonth += months%12
+                if lastmonth > 12:
+                    lastmonth -= 12
+                    lastyear += 1
+
+            dt = event['dtstart'].dt - datetime.timedelta(0)
+            dt = dt.replace(year=now.year, month=now.month, day=1)
+
+            # Now find the correct day
+            weekdays = ['MO', 'TU', 'WE', 'TH', 'FR', 'SA', 'SU']
+            weekday = weekdays.index(rule['byday'][0][-2:])
+            num = int(rule['byday'][0][:-2])
+
+            if num == -1:
+                dt = dt.replace(year = dt.month == 12 and year + 1 or dt.year,
+                           month = ((dt.month + 1) % 12) or 12, day=1) \
+                     - datetime.timedelta(1)
+                dt = dt.replace(day = dt.day - 7 + (weekday - dt.weekday()) % 7)
+            else:
+                dt = dt.replace(day=(weekday - dt.weekday() + 1)%7 + 7 * (num-1))
+                if dt < now:
+                    # Rats. Look one month ahead
+                    dt = dt.replace(year = dt.month == 12 and year + 1 or dt.year,
+                               month = ((dt.month + 1) % 12) or 12, day=1)
+                    dt = dt.replace(day=(weekday - dt.weekday() + 1)%7 + 7 * (num-1))
+
+
+            # Now fix up dtstart/dtend
+            dd = dt - event['dtstart'].dt
+            event['dtstart'].dt += dd
+            event['dtend'].dt += dd
+            if lastyear < dt.year or (lastyear == dt.year and lastmonth < dt.month):
+                continue
+            yield event
+            continue
+
+        raise RuntimeError("Cannot handle event!")
+
+def summary(event):
+    return event['summary'].replace('Meeting','').replace('meeting', '').strip()
+
+class AgendaHelper(UbotCommander):
+    helper_info = {
+        'name': 'Agenda',
+        'description': 'Keep track of scheduled meetings',
+        'version': "1.0",
+        'url': 'http://ubot.seveas.net/helpers/agenda',
+        'author_name': 'Dennis Kaarsemaker',
+        'author_nick': 'Seveas',
+        'author_network': 'Freenode/MAGNet',
+        'author_email': 'dennis@kaarsemaker.net',
+    }
+    commands = {
+        'now':      'now',
+        'time':     'now',
+        'schedule': 'schedule',
+        'update':   'update',
+    }
+
+    def handle_options(self, opts, args):
+        super(AgendaHelper, self).handle_options(opts, args)
+        self.data = {}
+        for channel in self.active_channels:
+            self.data[channel] = {'events': []}
+            self.data[channel]['calendar'] = self.conf.get(channel, 'calendar')
+            self.data[channel]['update_topic'] = _bool(self.conf.get(channel, 'update_topic'))
+            self.data[channel]['topic_template'] = self.conf.get(channel, 'topic_template', raw=True)
+            self.data[channel]['timezone'] = pytz.timezone(self.conf.get(channel, 'timezone'))
+
+        gobject.timeout_add(60 * 60 * 1000, self.update_sources)
+        gobject.timeout_add(60 * 1000, self.update_topics)
+        self.update_sources()
+        self.update_topics()
+
+    def update_sources(self):
+        for channel in self.data:
+            url = self.data[channel]['calendar']
+            try:
+                data = urllib2.urlopen(url).read()
+            except:
+                self.error("Unable to retrieve %s" % url)
+                continue
+            try:
+                calendar = icalendar.Calendar.from_ical(data)
+            except:
+                self.error("Unable to parse data from %s" % url)
+                continue
+            events = sorted(upcoming(calendar.walk(), channel.lower()), key=lambda self: self['dtstart'].dt)
+            self.data[channel]['events'] = events
+        return True
+
+    def update_topics(self):
+        if not self.master:
+            return True
+        for channel in self.active_channels:
+            if self.data[channel]['update_topic']:
+                current = self.channels[channel].get_topic()
+                new = self.list_events(self.data[channel], num_events=6)
+                if current != new:
+                    self.channels[channel].set_topic(new)
+        return True
+
+    def list_events(self, data, num_events, tz=None, notemplate=False):
+        events = data['events']
+        template = (notemplate or (num_events == 1)) and '%s' or data['topic_template']
+
+        now = datetime.datetime.now(pytz.UTC)
+        tz = tz or data['timezone']
+
+        for e in events[:]:
+            if (now - e['dtend'].dt).total_seconds() > 1800:
+                events.remove(e)
+
+        if not len(events):
+            return template % {'timezone': str(tz), 'events': "No events scheduled"}
+
+        # The standard slack of 30 minutes after the meeting will be an
+        # error if there are 2 conscutive meetings, so remove the first
+        # one in that case
+        if len(events) > 1 and events[1]['dtstart'].dt < now:
+            events.pop(0)
+
+        preamble = ''
+        if (now - events[0]['dtstart'].dt).total_seconds() < 600:
+            preamble = 'Current meeting: %s | ' % summary(events[0]).strip()
+            events = events[1:]
+            num_events -= 1
+
+        events = ["%s - %s" % (summary(x), x['dtstart'].dt.astimezone(tz).strftime("%m/%d %H:%M")) for x in events]
+        events = preamble + 'Schedule: ' + ' | '.join(events[:num_events])
+        return notemplate and events or (template % {'timezone': str(tz), 'events': events})
+
+    def update(self, message):
+        self.update_sources()
+        self.update_topics()
+
+    def now(self, message, tz):
+        """What's the current time in a specific timezone"""
+        tz = parse_tz(tz)
+        if not tz:
+            message.reply("Unknown timezone", private=True, slow=True)
+            return
+        t = datetime.datetime.now(pytz.UTC)
+        message.reply("Current time in %s: %s" % (str(tz),
+            t.astimezone(tz).strftime("%B %d %Y, %H:%M:%S")))
+
+    def schedule(self, message, tz):
+        tz = parse_tz(tz)
+        if not tz:
+            self.reply("Unknown timezone" % tz, private=True, slow=True)
+            return
+        events = self.list_events(self.data[message.target], 6, tz, notemplate=True)
+        message.reply("Timezone %s: %s" % (str(tz), events))
+
+    def in_topic(self, message):
+        if self.master and self.data[message.target]['update_topic'] and message.nick != self.nickname:
+            message.reply("The topic of %s is managed by me, please don't change it manually" % message.target, private=True)
+
+AgendaHelper.run()

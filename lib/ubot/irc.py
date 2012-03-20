@@ -395,7 +395,7 @@ class IrcString(unicode):
 
 s = IrcString
 
-has_target = ('PRIVMSG', 'NOTICE', 'PART', 'JOIN', 'KICK')
+has_target = ('PRIVMSG', 'NOTICE', 'PART', 'JOIN', 'KICK', 'TOPIC')
 
 # Number of arguments that don't need to be prefixed with a :
 nargs_out = {

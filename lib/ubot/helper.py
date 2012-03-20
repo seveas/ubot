@@ -19,7 +19,7 @@ class UbotHelper(dbus.service.Object):
             self.name = opts.name
         else:
             self.name = self.__class__.__name__.lower()
-            self.name = re.sub('(respond|command|notifi|listen)er', '', self.name)
+            self.name = re.sub('(help|respond|command|notifi|listen)er', '', self.name)
 
         self.conf = None
         if opts.config:

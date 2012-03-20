@@ -29,7 +29,7 @@ module Ubot
             if options[:name]
                 @name = options[:name]
             else
-                @name = self.class.to_s.downcase.gsub(/(.*::)?(.*?)((command|respond|listen|notifi)er)?$/, '\2')
+                @name = self.class.to_s.downcase.gsub(/(.*::)?(.*?)((help|command|respond|listen|notifi)er)?$/, '\2')
             end
             if options[:config]
                 if File.exist?(options[:config])

@@ -19,6 +19,7 @@ Some extra libraries are needed too:
 * Config::Ini (perl)
 * Nokogiri (ruby)
 * pygobject (part of pygtk) (python)
+* icalendar (python)
 
 Mysql or postgres may be used for database support instead of the default
 sqlite database.

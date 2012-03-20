@@ -1,3 +1,3 @@
-SUBDIRS = noroot pmrelay p2000 isup mess lart
+SUBDIRS = agenda noroot pmrelay p2000 isup mess lart
 pkgdatadir=${datadir}/ubot/helpers
 pkgdata_DATA = 

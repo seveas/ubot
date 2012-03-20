@@ -41,6 +41,20 @@ And the guidelines:
 * Patches are preferably submitted as github pull requests, but any other way
   will do.
 
+New helpers
+-----------
+To add a new helper to µbot, you must teach the autotools-based build system
+about it. This involves a few steps:
+
+* Add a configfile :file:`data/helpers/your_helper/your_helper.conf`
+* Add a :file:`Makefile.am` to `data/helpers/your_helper/`, see existing
+  helpers like the lart helper for an example
+* Add the helper to :file:`helpers/Makefile.am`, :file:`data/helpers/Makefile.am` and :file:`configure.ac`
+* Run :file:`./autogen.sh` to regenerate :file:`./configure` and various Makefiles
+* Add documentation in :file:`doc/your_helper.rst`, again using existing
+  helpers as example
+* Add your document to :file:`doc/Makefile.am`
+
 Making a release
 ----------------
 .. note:: This section is mainly meant for myself -- Dennis

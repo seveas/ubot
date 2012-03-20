@@ -37,6 +37,7 @@ AC_OUTPUT(Makefile
           doc/Makefile
           data/Makefile
           data/helpers/Makefile
+          data/helpers/agenda/Makefile
           data/helpers/noroot/Makefile
           data/helpers/pmrelay/Makefile
           data/helpers/p2000/Makefile
