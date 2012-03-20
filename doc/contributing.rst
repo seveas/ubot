@@ -40,3 +40,15 @@ And the guidelines:
   to the list of authors in doc/copying.rst.
 * Patches are preferably submitted as github pull requests, but any other way
   will do.
+
+Making a release
+----------------
+.. note:: This section is mainly meant for myself -- Dennis
+To make a release, you will need to do some administrative tasks:
+
+* Bump the version number in configure.ac and doc/conf.py
+* Bump the version number in doc/Makefile.am
+* Commit, tag and push to github
+* ./autogen.sh
+* make dist; make -C doc html
+* Upload tarballs and documentation

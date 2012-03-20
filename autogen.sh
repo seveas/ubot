@@ -1,7 +1,6 @@
 #!/bin/bash
 
 set -e
-set -x
 
 # Make sure we're clean
 make distclean || true
@@ -10,4 +9,3 @@ make distclean || true
 aclocal
 automake -ac
 autoconf
-./configure "$@"
