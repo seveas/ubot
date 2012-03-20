@@ -3,58 +3,72 @@ Running µbot
 
 Starting the bot
 ----------------
-µbot can be started from the web interface or from the terminal. For now, let's
-use the terminal and we'll worry about the web interface later. First we need
-to start our special D-Bus daemon and set up our environment.
+The first time you run µbot, it will prompt you for basic configuration
+variables. It will then start its own D-Bus daemon (if it's not yet running)
+and then launch itself into the background. It will log into logfiles in
+:file:`~/.local/share/ubot` and not output anything on screen after startup.
 
-::
-  dennis@lightning:~/ubot$ eval $(bin/run_from_source.sh)
-  dennis@lightning:~/ubot$ 
+To see the status of the bot, you can use the :program:`ubot send` command ::
 
-Now that D-Bus is running, we can start the bot. Because µbot ships with
-service files that are installed alongside the D-Bus configuration, we can
-either let D-Bus start the bot in the background, or run it ourselves.
-
-Starting automatically:
-
-::
-  dennis@lightning:~/ubot$ bin/ubot-send get_info
+  $ ubot send get_info
   Calling get_info with arguments []
-  dbus.Dictionary({dbus.String(u'server'):
-  [... more output omitted ...]
+  {'connected': True,
+   'master': True,
+   'nickname': 'MicroBot',
+   'port': 6667,
+   'server': 'irc.freenode.net',
+   'server_version': 'ircd-seven-1.1.3',
+   'synced': True,
+   'version': '0.0.1'}
 
-Running it manually:
-
-::
-  dennis@lightning:~/ubot$ bin/ubot -v -c ~/.config/ubot/ubot.conf
+µbot will automatically join its control channel and wait for further instructions.
 
 Starting helpers
 ----------------
-Like µbot itself, helpers also register their own unique bus name and can be
-started in the same way: via the web interface, via the command line by talking
-to the D-Bus daemon or starting the helper manually. The easiest way is manually:
 
-::
-  dennis@lightning:~/ubot$ helpers/lart -c ~/.config/ubot/lart.conf
+Helpers can also be started via the main :program:`ubot` utility. They will be
+started by the D-Bus daemon and run as services. Logging is done via the µbot
+instance they talk to, and thus will end up in the same logfiles. As an
+example, here is how you start the lart helper ::
 
-Administering the bot
----------------------
-The `ubot-send` tool shipped with µbot allows you to control the bot via the
-command line. It is a very simple wrapper around the µbot :doc:`D-Bus API
-<dbusapi>`. Here is an example that makes the bot join a channel without
-passphrase.
+  $ ubot start lart
 
-::
-  dennis@lightning:~/code/ubot-1$ bin/ubot-send get_channels
+If you want to run a helper manually, you can look at the relevant .service
+file in :file:`~/.config/ubot/services/` to find out the commands to use.
+
+Administering the bot on the command line
+-----------------------------------------
+µbot can be conveniently administered from the command line. with the command
+:program:`ubot send`, you can send the bot any command that can be sent via the
+:doc:`D-Bus API <dbusapi>`. Here is an example that makes the bot join a
+channel without passphrase. ::
+
+  $ ubot send get_channels
   Calling get_channels with arguments []
-  dbus.Array([dbus.String(u'#microbot'), dbus.String(u'#microbot-off')], signature=dbus.Signature('s'))
-  dennis@lightning:~/code/ubot-1$ bin/ubot-send  join '#microbot-test' ''
+  ['#microbot']
+  $ ubot send join '#microbot-test' ''
   Calling join with arguments ['#microbot-test', '']
-  None
-  dennis@lightning:~/code/ubot-1$ bin/ubot-send get_channels
+  $ ubot send get_channels
   Calling get_channels with arguments []
-  dbus.Array([dbus.String(u'#microbot-test'), dbus.String(u'#microbot'), dbus.String(u'#microbot-off')], signature=dbus.Signature('s'))
+  ['#microbot', '#microbot-test']
 
-As you can see, it is a very thin layer above the code, so this is not
-recommended for daily use. However, it is useful for integrating with
-shellscripts and other external tools.
+Please read the D-Bus API documentation to get a full overview of what
+:program:`ubot send` can do for you.
+
+The µbot web interface
+----------------------
+
+The µbot web interface is a django application that can integrate with an
+existing django environment or be run standalone. The standalone server
+requires no additional configuration and can be started with :program:`ubot
+instaweb`. If you wish to include the command interface in your existing django
+application, you will need to set the :envvar:`DBUS_SESSION_BUS_ADDRESS` in
+your settings.py and add :py:mod:`ubot.control` to your
+:envvar:`INSTALLED_APPS`.
+
+If you use the instaweb server, you can go to http://127.0.0.1:8000/control/ to
+control your bots. You will need to give yourself administrator access to the
+bot first by visiting http://127.0.0.1/admin/
+
+With this web interface you can make your µbot do things such as join and part
+channels or send messages. You can also start and stop helpers from there.

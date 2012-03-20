@@ -5,24 +5,38 @@ Contributing to µbot
 any useful form. The code can be found on GitHub_, where it is also easy to
 collaborate on fixes, new features and extra helpers.
 
-Any and all contributions should use the same license as µbot itself: the GNU
-general public license, version 3 or later. Submitting patches and
-contributions to µbot implies that you accept these terms. Copyright assignment
-is not required, you will still own all rights to the contributions you make.
-
 Here are some additional tips for making contributing to µbot a pleasant
 experience.
 
-.. _GitHub: http://github.net/seveas/ubot
+.. _GitHub: http://github.com/seveas/ubot
 
 Bug reports
 -----------
+If you find a bug in µbot, please report it so it can be fixed. Issues can be
+reported in the `GitHub issue tracker <https://github.com/seveas/ubot/issues>`_.
 
-Bug fixes
----------
+Bug fixes and new features
+--------------------------
+If you have fixed or improved µbot in any way, please share your contribution.
+There are a few hard rules and a few guidleines to follow though, before your
+contribution can be accepted.
 
-New features
-------------
+Let's do the hard rules first:
 
-New helpers
------------
+* Any and all contributions should be licensed under the same terms as µbot
+  itself: the GNU general public license, version 3 or later. 
+* Copyright assignment is not required, you will still own all rights to the
+  contributions you make.
+* New helpers should be complete, that is: including a config file and all
+  relevant data files. All these files need to be available under the same GNU
+  GPL license.
+* Any user interface or API change must be documented.
+
+And the guidelines:
+
+* You should follow the code style of the existing code, which is mostly PEP 8.
+  I am picky about whitespace and will fix up commits that I think are ugly.
+* If you think your change is significant, append your name and e-mail address 
+  to the list of authors in doc/copying.rst.
+* Patches are preferably submitted as github pull requests, but any other way
+  will do.

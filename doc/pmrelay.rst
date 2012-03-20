@@ -1,8 +1,13 @@
-Root warner
-===========
+Private message relay
+=====================
 
-This plugin will send a private warning to anybody who joins your channel with
-root as nickname or ident.
+This plugin will relay incoming private messages to a specific channel
+
+Example
+-------
+::
+
+  <MicroBot> <Seveas> Hello MicroBot, here is a private message
 
 Commandline arguments
 ---------------------
@@ -21,8 +26,8 @@ Configuration keys
 
 This helper needs the following keys in its configuration section:
 
-======== ======= =================================================
-Key      Default Meaning
-======== ======= =================================================
-channels None    In which channels should display alerts
-======== ======= =================================================
+======= ======= ==================================
+Key     Default Meaning
+======= ======= ==================================
+channel None    Where to relay private messages to
+======= ======= ==================================

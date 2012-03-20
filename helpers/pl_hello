@@ -1,0 +1,41 @@
+#!/usr/bin/perl
+
+my $inc = new Ubot::Helper::Hello;
+$inc->run;
+
+package Ubot::Helper::Hello;
+use strict;
+use warnings;
+use Ubot::Helper;
+use base 'Ubot::Commander';
+
+sub new {
+    my $class = shift;
+    my $self = $class->SUPER::new(@_);
+    $self->{helper_info} = {
+        name => 'Hello',
+        description => 'Say hello',
+        version => "1.0",
+        url => 'http://ubot.seveas.net/helpers/lart',
+        author_name => 'Dennis Kaarsemaker',
+        author_nick => 'Seveas',
+        author_network => 'Freenode/MAGNet',
+        author_email => 'dennis@kaarsemaker.net',
+    };
+    $self->{uppercase} = 0;
+    $self->{commands} = {'hello' => 'hello'};
+    return $self;
+}
+
+sub add_options {
+    my ($self, $opts) = @_;
+    $self->SUPER::add_options($opts);
+    $opts->{'u|uppercase'} = \$self->{uppercase};
+}
+
+sub hello {
+    my ($self, $message) = @_;
+    my $reply = sprintf("Hello, %s!", $message->{nick});
+    $reply = uc($reply) if $self->{uppercase};
+    $message->reply($reply);
+}

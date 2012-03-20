@@ -2,12 +2,12 @@ The µbot D-Bus API
 ==================
 
 A µbot instance will register a unique service name on the D-Bus of the form
-``net.seveas.ubot.<botname here>``. The default is ``net.seveas.ubot.ubot``. It
-exports several objects, the main bot and an object for each channel.
+``net.seveas.ubot.<botname>``. The default is ``net.seveas.ubot.ubot``. It
+exports several objects: the main bot and an object for each channel.
 
 The name of the main bot is ``/net/seveas/ubot/<botname>`` and each channel is
 exported as ``/net/seveas/ubot/<botname>/channel/<channel>``. As not all
-characters that are valid in a channel name, are valid as D-Bus names,
+characters that are valid in a channel name are valid as D-Bus names,
 non-alphabetic characters are replaced with an underscore (``_``) followed by
 the ordinal number of the character. So, ``#`` is replaced ``_35`` and the
 channel ``#microbot`` will be ``/net/seveas/ubot/ubot/channel/_35microbot``.
@@ -90,7 +90,7 @@ Methods
 
 .. function:: get_helpers() (out: aas)
 
-   Returns an array of 2-tuples ``(servicename, obejctname)`` that lists all
+   Returns an array of 2-tuples ``(servicename, objectname)`` that lists all
    active helpers.
 
 .. function:: get_info() (out: a{sv})
@@ -134,7 +134,7 @@ Methods
    Makes the bot quit IRC and shut itself down. This will also stop all the
    active helpers.
 
-.. function:: rqwmsg(command, params) (in: sas)
+.. function:: rawmsg(command, params) (in: sas)
 
    Send a raw message with parameters.
 

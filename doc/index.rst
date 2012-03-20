@@ -16,13 +16,15 @@ completely different language, as long as there are D-Bus bindings!
 µbot is also easy to manage, the configuration is done in simple .ini files and
 there is a web admin with which you can control the bot and its helpers.
 
+Table of contents
+-----------------
+
 .. toctree::
-   :maxdepth: 2
+   :maxdepth: 1
 
    installing
    configuring
    running
-   webadmin
    helpers
    api
    contributing

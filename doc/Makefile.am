@@ -1,5 +1,5 @@
 docdir = $(datadir)/doc/@PACKAGE@
-doc_DATA = api.rst configuring.rst contributing.rst copying.rst dbusapi.rst helpers.rst index.rst installing.rst isup.rst lart.rst mess.rst noroot.rst p2000.rst perl.rst python.rst ruby.rst running.rst webadmin.rst Makefile
+doc_DATA = api.rst configuring.rst contributing.rst copying.rst dbusapi.rst helpers.rst index.rst installing.rst isup.rst lart.rst mess.rst noroot.rst p2000.rst perl.rst pmrelay.rst python.rst ruby.rst running.rst Makefile
 
 # Makefile for Sphinx documentation
 #

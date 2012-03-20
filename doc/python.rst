@@ -315,6 +315,6 @@ definition and place it in the service directory (by default
 
   [D-BUS Service]
   Name=net.seveas.ubot.helper.hello
-  Exec=/path/to/helpers/py_hello -c ~/.config/ubot/lart.conf
+  Exec=/path/to/helpers/py_hello -c ~/.config/ubot/hello.conf
 
 Making your helper autostartable is of course not mandatory.

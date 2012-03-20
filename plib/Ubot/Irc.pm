@@ -316,6 +316,12 @@ our %nonrfc_replies = (
 );
 %replies = (%replies, %nonrfc_replies);
 
+%channel_user_modes = (
+    'o' => '@',
+    'h' => '%',
+    'v' => '+',
+);
+
 # ===== ===== ===== ===== ===== ===== ===== ===== ===== ===== ===== ===== =====
 package Ubot::Irc::InMessage;
 use strict;

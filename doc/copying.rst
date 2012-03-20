@@ -1,6 +1,6 @@
 Copyright information
 =====================
-µbot is ©2008-2011 Dennis Kaarsemaker et al.
+µbot is ©2008-2012 Dennis Kaarsemaker et al.
 
 Authors
 -------

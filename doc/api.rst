@@ -13,6 +13,7 @@ either language should look fairly similar. The documentation explains how to
 write a helper and the full available API.
 
 .. toctree::
+   :maxdepth: 1
 
    dbusapi
    python

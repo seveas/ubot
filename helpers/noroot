@@ -20,7 +20,7 @@ sub new {
         author_name => 'Dennis Kaarsemaker',
         author_nick => 'Seveas',
         author_network => 'Freenode/MAGNet',
-       author_email => 'dennis@kaarsemaker.net',
+        author_email => 'dennis@kaarsemaker.net',
     };
     return $self;
 }

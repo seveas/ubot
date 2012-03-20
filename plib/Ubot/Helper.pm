@@ -275,8 +275,8 @@ sub addressed {
 
     # So, prefix was seen (FIXME: allow nickname as prefix)
     # Now for the commands
-    if($self->can('commands')) {
-        my $commands = $self->commands;
+    if($self->{commands}) {
+        my $commands = $self->{commands};
         my ($c, $a) = split / +/, $msg, 2;
         $a ||= '';
         if(exists($commands->{$c})) {

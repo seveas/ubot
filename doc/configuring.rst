@@ -1,33 +1,10 @@
 Configuring µbot
 ================
 
-D-Bus
------
-µbot and its helpers use D-Bus_ to communicate with each other. To isolate them
-from the rest of the system, and to allow helpers to run on separate machines,
-it is recommended to use a separate D-Bus daemon. Fortunately, the
-:command:`run_from_source.sh` script makes this really easy for you.
-
-If you run this, it will start a D-Bus session bus based on the configuration
-in :file:`~/.config/ubot/session.conf`, which by default listens on tcp port
-11235. It also looks for startable services in
-:file:`~/.config/ubot/services/`. The service definitions in there make it
-possible to start µbot and its helpers from the web interface or the command
-line without knowing their full path.
-
-Unless you know D-Bus already, it is recommended that you do not change the
-D-Bus configuration and service files at this point.
-
-.. _D-Bus: http://dbus.freedesktop.org
-
-µbot itself
------------
 µbot and its default helpers understand simple .ini files, parsed by
 :mod:`ConfigParser` (python), :mod:`Config::INI::Reader` (perl) or
 :mod:`ini.rb` (ruby). Example config files are shipped with µbot, below you
 find a full reference.
-
-(Something about picking a bus name)
 
 Bot configuration
 ~~~~~~~~~~~~~~~~~
