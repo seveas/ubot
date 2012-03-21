@@ -247,6 +247,8 @@ class Ubot(dbus.service.Object):
             'server': self.server,
             'server_version': self.server_version,
             'port': self.port,
+            'django_settings_module': self.config.django_settings_module,
+            'datadir': self.config.datadir,
         }
 
     @dbus.service.method(dbus_interface='net.seveas.ubot.bot',

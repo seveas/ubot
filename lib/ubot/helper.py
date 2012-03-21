@@ -228,3 +228,9 @@ class UbotCommander(UbotResponder):
             command, arg = message._command
             getattr(self, command)(message, arg)
 
+class DjangoHelper(object):
+    def handle_options(self, opts, args):
+        super(DjangoHelper, self).handle_options(opts, args)
+        info = self.bot.get_info()
+        os.environ['UBOT_DATADIR'] = info['datadir']
+        os.environ['DJANGO_SETTINGS_MODULE'] = info['django_settings_module']

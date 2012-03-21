@@ -153,51 +153,8 @@ def webserver(opts):
     import ubot.web
 
     conf = ubot.conf.UbotConfig(opts.config)
-    datadir = os.path.expanduser(os.path.join('~', '.local', 'share', 'ubot'))
-
-    my_settings = {
-        'DEBUG': True,
-        'TEMPLATE_DEBUG': True,
-        'DATABASES': {
-            'default': {
-                'ENGINE': 'django.db.backends.sqlite3',
-                'NAME': os.path.join(datadir, '%s_instaweb.db' % conf.busname),
-            }
-        },
-        'TIME_ZONE': 'Europe/Amsterdam',
-        'SITE_ID': 1,
-        'USE_L10N': True,
-        'MEDIA_ROOT': os.path.join(os.path.dirname(ubot.web.__file__), 'media'),
-        'MEDIA_URL': '/media/',
-        'ADMIN_MEDIA_PREFIX': '/media/admin/',
-        'SECRET_KEY': 'ub0tub0tub0tub0tub0tub0tub0tub0tub0tub0tub0tub0t',
-        'MIDDLEWARE_CLASSES': (
-            'django.middleware.common.CommonMiddleware',
-            'django.contrib.sessions.middleware.SessionMiddleware',
-            'django.middleware.csrf.CsrfViewMiddleware',
-            'django.contrib.auth.middleware.AuthenticationMiddleware',
-            'django.contrib.messages.middleware.MessageMiddleware',
-        ),
-        'ROOT_URLCONF': 'ubot.project_urls',
-        'INSTALLED_APPS': (
-            'django.contrib.auth',
-            'django.contrib.contenttypes',
-            'django.contrib.sessions',
-            'django.contrib.sites',
-            'django.contrib.messages',
-            'django.contrib.admin',
-            'django.contrib.admindocs',
-
-            # Ubot and its default helpers
-            'ubot.web.control',
-        ),
-        'LOGIN_URL': '/login/',
-        'LOGIN_REDIRECT_URL': '/'
-    }
-
-    from django.conf import settings
-    settings.configure(**my_settings)
-    print settings.MEDIA_ROOT
+    os.environ['UBOT_DATADIR'] = conf.datadir
+    os.environ['DJANGO_SETTINGS_MODULE'] = conf.django_settings_module
 
     from django.core.management import call_command
     call_command('syncdb')

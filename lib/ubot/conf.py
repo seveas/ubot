@@ -15,6 +15,7 @@ class UbotConfig(object):
         self.busname     = 'ubot'
         self.datadir     = os.path.expanduser(os.path.join('~','.local','share','ubot'))
         self.datafile    = os.path.join(self.datadir, self.busname + '.dat')
+        self.django_settings_module = 'ubot.web.instaweb_settings'
         self.parse_config(configfile)
 
         # Configure logging
@@ -41,7 +42,7 @@ class UbotConfig(object):
             i += 1
         if not self.servers:
             raise ubot.exceptions.ConfigError("No servers found")
-        for opt in ('ident', 'priority', 'password', 'realname', 'busname', 'controlchan'):
+        for opt in ('ident', 'priority', 'password', 'realname', 'busname', 'controlchan', 'django_settings_module'):
             if parser.has_option('me', opt):
                 setattr(self, opt, parser.get('me', opt))
         self.datafile = os.path.join(self.datadir, self.busname + '.dat')
