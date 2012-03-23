@@ -1,0 +1,212 @@
+#!/usr/bin/python
+
+import apt_pkg
+from email.parser import HeaderParser
+import os
+import subprocess
+import sys
+from ubot.helper import UbotCommander, DjangoHelper
+import ubot.progressbar
+
+apt_pkg.init()
+
+class PseudoFactoid(object):
+    alias_of = None
+    error = False
+
+    def __init__(self, txt):
+        self.txt = txt
+    def msg(self):
+        return self.txt
+
+class ErrorFactoid(PseudoFactoid):
+    error = True
+
+class EncyclopediaHelper(DjangoHelper, UbotCommander):
+    def add_options(self, parser):
+        super(EncyclopediaHelper, self).add_options(parser)
+        parser.add_option('--update-apt', dest="update_apt", 
+                          action="store_true", default=False,
+                          help="Update the lists of packages and exit")
+
+    def handle_options(self, opts, args):
+        super(EncyclopediaHelper, self).handle_options(opts, args)
+        self.listdir = self.conf.get(self.name, 'listdir')
+        self.default_release = {'_default': self.conf.get(self.name, 'default_release')}
+        for channel in self.active_channels:
+            self.default_release[channel] = self.default_release['_default']
+            if self.conf.has_option(channel, 'default_release'):
+                self.default_release[channel] = self.conf.get_option(channel, 'default_release')
+
+        # Now it's safe to import django models
+        global Factoid, SourcePackage, BinaryPackage, releases, transaction, Q
+        from ubot.web.encyclopedia.models import Factoid, SourcePackage, BinaryPackage, releases
+        from django.db import transaction
+        from django.db.models import Q
+
+        if opts.update_apt:
+            self.update_apt()
+            sys.exit(0)
+
+    def update_apt(self):
+        """Run apt-get update for all releases and store all package info in the database"""
+        parser = HeaderParser()
+        if not os.path.exists(os.path.join(self.listdir, 'cache', 'archives', 'partial')):
+            os.makedirs(os.path.join(self.listdir, 'cache', 'archives', 'partial'))
+        for release in releases:
+            release = release[0]
+            releasedir = os.path.join(self.listdir, 'cache', release)
+            if not os.path.exists(os.path.join(releasedir, 'partial')):
+                os.makedirs(os.path.join(releasedir, 'partial'))
+            open(os.path.join(self.listdir, 'cache', '%s.status' % release), 'w').close()
+            print "Running apt-get upgrade for %s" % release
+            subprocess.call(["/usr/bin/apt-get", "-qq",
+                "-o", "Dir::State::Lists=%s" % releasedir,
+                "-o", "Dir::Etc::SourceList=%s" % os.path.join(self.listdir, '%s_sources.list' % release),
+                "-o", "Dir::Etc::SourceParts=''",
+                "-o", "Dir::State::Status=%s" % os.path.join(self.listdir, 'cache', "%s.status" % release),
+                "-o", "Dir::Cache=%s" % os.path.join(self.listdir, 'cache'),
+                "update"])
+            
+            for fn in os.listdir(releasedir):
+                existing_sources = dict(SourcePackage.objects.filter(release=release).values_list('name', 'version'))
+                existing_binaries = dict(BinaryPackage.objects.filter(release=release).values_list('name', 'version'))
+                if fn.endswith('Sources'):
+                    print "Checking %s" % os.path.basename(fn)
+                    with open(os.path.join(releasedir, fn)) as fd:
+                        packages = fd.read().strip()
+                        if not packages:
+                            continue
+                        packages = packages.split("\n\n")
+                    with transaction.commit_on_success():
+                        pb = ubot.progressbar.Progressbar(target=len(packages))
+                        count = 0
+                        for package in packages:
+                            count += 1
+                            msg = parser.parsestr(package)
+                            name = msg['Package']
+                            ver = msg['Version']
+                            if name not in existing_sources:
+                                print "\r\033[KAdding %s %s (%s)" % (name, ver, release)
+                                SourcePackage(release=release, name=name, version=ver).save()
+                            elif ver != existing_sources[name] \
+                                 and apt_pkg.VersionCompare(existing_sources[name], ver) == -1:
+                                print "\r\033[KUpdating %s %s->%s (%s)" % (name, existing_sources[name], ver, release)
+                                SourcePackage.objects.filter(name=name, release=release).update(version=ver)
+                            else:
+                                pb.set_progress(count)
+                if fn.endswith('Packages'):
+                    print "Checking %s" % os.path.basename(fn)
+                    component = fn.split('_')[-3]
+                    with open(os.path.join(releasedir, fn)) as fd:
+                        packages = fd.read().strip()
+                        if not packages:
+                            continue
+                        packages = packages.split("\n\n")
+                    with transaction.commit_on_success():
+                        pb = ubot.progressbar.Progressbar(target=len(packages))
+                        count = 0
+                        for package in packages:
+                            count += 1
+                            msg = parser.parsestr(package)
+                            name = msg['Package']
+                            ver = msg['Version']
+                            src = msg['Source'] or msg['Package']
+                            if name not in existing_binaries:
+                                print "\r\033[KAdding %s %s (%s)" % (name, ver, release)
+                                BinaryPackage(release=release, name=name, version=ver,
+                                        shortdesc=msg['Description'].split('\n',1)[0], source=src,
+                                        component=component, priority=msg['Priority'] or 'optional').save()
+                            elif ver != existing_binaries[name] \
+                                 and apt_pkg.VersionCompare(existing_binaries[name], ver) == -1:
+                                print "\r\033[KUpdating %s %s->%s (%s)" % (name, existing_binaries[name], ver, release)
+                                BinaryPackage.objects.filter(name=name, release=release).update(
+                                        version=ver, shortdesc=msg['Description'].split('\n',1)[0],
+                                        source=src, component=component, priority=msg['Priority'] or 'optional')
+                            else:
+                                pb.set_progress(count)
+
+    def in_privmsg(self, message):
+        if not self.addressed(message):
+            return
+
+        msg = message.params[0][1:].strip()
+
+        # Target detection
+        # !foo | nick -> reply in the channel, prefixed with nick
+        # !foo > nick -> reply privately to nick
+        reply_prefix = ""
+        reply_target = message.target
+        if message.target == self.nickname:
+            reply_target = message.nick
+
+        if '|' in msg:
+            msg, reply_prefix = [x.strip() for x in msg.rsplit('|', 1)]
+            reply_prefix += ': '
+        elif '>' in msg and message.target.startswith('#'):
+            msg, reply_target = [x.strip() for x in msg.split('>', 1)]
+            reply_prefix = message.nick + ' wants you to know: '
+
+        if reply_target == message.nick and message.target != self.nickname:
+            message.reply("Please use private messages to investigate", private=True)
+
+        if msg.startswith('info '):
+            factoid = self.package_info(msg[5:], message.target)
+        elif msg.startswith('find ') or msg.startswith('search '):
+            factoid = self.find_factoid_or_package(msg[5:].lstrip(), message.target)
+        else:
+            factoid = self.get_factoid(msg, message.target)
+            while factoid.alias_of:
+                factoid = factoid.alias_of
+            if hasattr(factoid, 'popularity'):
+                factoid.popularity += 1
+                factoid.save()
+
+        # And reply!
+        if factoid.error:
+            message.reply(factoid.msg(), private=True)
+        else:
+            self.send(reply_target, reply_prefix + factoid.msg())
+
+    def find_factoid_or_package(self, text, channel):
+        dis = self.default_release.get(channel, self.default_release['_default'])
+        results = list(Factoid.objects.filter(Q(name__contains=text)|Q(value__contains=text), channel__in=["", channel])) + \
+                  list(BinaryPackage.objects.filter(name__contains=text, release=dis)) + \
+                  list(SourcePackage.objects.filter(name__contains=text, release=dis))
+        results = sorted(set([x.name for x in results]))
+        if not results:
+            return PseudoFactoid("No fact or package found matching '%s'" % text)
+        else:
+            return PseudoFactoid("Found: %s" % " ".join(results[:10]))
+
+    def get_factoid(self, name, channel):
+        try:
+            return Factoid.objects.get(name=name, channel=channel)
+        except Factoid.DoesNotExist:
+            pass
+        try:
+            return Factoid.objects.get(name=name, channel='')
+        except Factoid.DoesNotExist:
+            pass
+
+        factoid = self.package_info(name, channel)
+        if factoid.error:
+            factoid = ErrorFactoid("Sorry, I do not know anything about %s." % name)
+        return factoid
+
+    def package_info(self, msg, target):
+        parts = msg.split()
+        if len(parts) == 1:
+            pkg, dis = parts[0], self.default_release.get(target, self.default_release['_default'])
+        else:
+            pkg, dis = parts[:2]
+        packages = list(BinaryPackage.objects.filter(name=pkg, release=dis))
+        if not packages:
+            # OK do we have a sourcepackage?
+            packages = list(SourcePackage.objects.filter(name=pkg, release=dis))
+        if not packages:
+            return ErrorFactoid("Package %s does not exist in %s" % (pkg, dis))
+        packages.sort(lambda x,y: apt_pkg.VersionCompare(x.version, y.version))
+        return packages[0]
+
+EncyclopediaHelper.run()

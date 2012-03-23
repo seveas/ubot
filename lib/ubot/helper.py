@@ -202,9 +202,15 @@ class UbotCommander(UbotResponder):
                 msg = msg[1:].lstrip()
                 break
         else:
-            return False
+            match = re.match(r'^%s[^w](.*)' % self.nickname, msg, flags=re.I)
+            if match:
+                msg = match.group(1).lstrip()
+            else:
+                return msg.target == self.nickname
 
-        # So, prefix was seen (FIXME: allow nickname as prefix)
+        message.params[0] == message
+
+        # So, prefix was seen
         # Now for the commands
         if hasattr(self, 'commands'):
             _ = msg.split(None, 1)

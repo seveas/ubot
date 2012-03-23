@@ -1,10 +1,10 @@
 *.pyc
 *.o
 *.hi
-helpers/calc
 .*.sw?
 _build
 .bzr*
+import_*
 
 # Autotools byproducts
 config.status

@@ -1,0 +1,12 @@
+# Sources for Ubuntu 11.04 Natty Narwhal
+
+deb http://archive.ubuntu.com/ubuntu/ natty main restricted universe multiverse
+deb http://archive.ubuntu.com/ubuntu/ natty-updates main restricted universe multiverse
+deb http://security.ubuntu.com/ubuntu/ natty-security main restricted universe multiverse
+
+deb-src http://archive.ubuntu.com/ubuntu/ natty main restricted universe multiverse
+deb-src http://archive.ubuntu.com/ubuntu/ natty-updates main restricted universe multiverse
+deb-src http://security.ubuntu.com/ubuntu/ natty-security main restricted universe multiverse
+
+deb http://archive.canonical.com/ubuntu natty partner
+deb-src http://archive.canonical.com/ubuntu natty partner

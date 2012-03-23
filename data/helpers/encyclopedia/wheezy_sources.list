@@ -1,0 +1,2 @@
+deb http://ftp.debian.org/debian wheezy main non-free contrib
+deb-src http://ftp.debian.org/debian wheezy main non-free contrib

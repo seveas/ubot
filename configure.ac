@@ -29,6 +29,7 @@ AC_OUTPUT(Makefile
           lib/ubot/web/control/templates/registration/Makefile
           lib/ubot/web/control/templates/ubot/Makefile
           lib/ubot/web/control/templates/ubot/control/Makefile
+          lib/ubot/web/encyclopedia/Makefile
           lib/ubot/web/media/Makefile
           lib/ubot/web/media/redmond/Makefile
           lib/ubot/web/media/redmond/images/Makefile
@@ -38,6 +39,7 @@ AC_OUTPUT(Makefile
           data/Makefile
           data/helpers/Makefile
           data/helpers/agenda/Makefile
+          data/helpers/encyclopedia/Makefile
           data/helpers/noroot/Makefile
           data/helpers/pmrelay/Makefile
           data/helpers/p2000/Makefile
