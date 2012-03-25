@@ -15,13 +15,13 @@ class Factoid(models.Model):
         if self.channel:
             return u'%s (%s)' % (self.name, self.channel)
         return self.name
-    
+
     def msg(self):
         if self.value.startswith('<reply>'):
             return self.value[7:].lstrip()
         else:
             return '%s is %s' % (self.name, self.value)
-    
+
     class Meta:
         unique_together = (('name','channel'),)
 
@@ -38,16 +38,16 @@ class SourcePackage(models.Model):
 
     def url(self):
         if self.release in debian:
-            return 'http://packages.qa.debian.org/%s/%s.html' % (self.packagename[0], self.packagename) 
+            return 'http://packages.qa.debian.org/%s/%s.html' % (self.name[0], self.name)
         elif self.release in ubuntu:
-            return 'https://launchpad.net/ubuntu/+source/' + self.packagename
+            return 'https://launchpad.net/ubuntu/+source/' + self.name
         return ''
 
     def msg(self):
-        return "%s is a sourcepackage in %s, version %s %s" % (self.packagename, self.release, self.version, self.url())
+        return "%s is a sourcepackage in %s, version %s %s" % (self.name, self.release, self.version, self.url())
 
     def __unicode__(self):
-        return u"%s (%s/%s)" % (self.packagename, self.version, self.release)
+        return u"%s (%s/%s)" % (self.name, self.version, self.release)
 
 class BinaryPackage(models.Model):
     name = models.CharField("Name", max_length=64, db_index=True)
@@ -63,17 +63,17 @@ class BinaryPackage(models.Model):
 
     def url(self):
         if self.release in debian:
-            s = self.source or self.packagename
-            return 'http://packages.qa.debian.org/%s/%s.html' % (s[0], s) 
+            s = self.source or self.name
+            return 'http://packages.qa.debian.org/%s/%s.html' % (s[0], s)
         elif self.release in ubuntu:
-            s = self.source or self.packagename
+            s = self.source or self.name
             return 'https://launchpad.net/ubuntu/+source/' + s
         return ''
 
     def msg(self):
         source = self.source and (' (Source: %s)' % self.source) or ''
-        return "%s%s: %s. In component %s, is %s. Version %s (%s) %s" % (self.packagename, source, self.shortdesc, self.component, 
+        return "%s%s: %s. In component %s, is %s. Version %s (%s) %s" % (self.name, source, self.shortdesc, self.component,
                                                                         self.priority, self.version, self.release, self.url())
 
     def __unicode__(self):
-        return u"%s (%s/%s)" % (self.packagename, self.version, self.release)
+        return u"%s (%s/%s)" % (self.name, self.version, self.release)

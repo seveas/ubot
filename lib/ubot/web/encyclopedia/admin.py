@@ -8,13 +8,13 @@ class FactoidAdmin(admin.ModelAdmin):
 admin.site.register(Factoid, FactoidAdmin)
 
 class SourcePackageAdmin(admin.ModelAdmin):
-    search_fields = ('packagename',)
+    search_fields = ('name',)
     list_filter = ('release',)
-    list_display = ('packagename','release','version')
+    list_display = ('name','release','version')
 admin.site.register(SourcePackage, SourcePackageAdmin)
 
 class BinaryPackageAdmin(admin.ModelAdmin):
-    search_fields = ('packagename','source')
+    search_fields = ('name','source')
     list_filter = ('release','component')
-    list_display = ('packagename','source','release','version','component')
+    list_display = ('name','source','release','version','component')
 admin.site.register(BinaryPackage, BinaryPackageAdmin)
