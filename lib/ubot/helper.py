@@ -149,6 +149,14 @@ class UbotHelper(dbus.service.Object):
     def get_info(self):
         return self.helper_info
 
+    def get_user(self, prefix):
+        return dbus.SessionBus().get_object('net.seveas.ubot.helper.users',
+                '/net/seveas/ubot/helper/users').get_user(prefix)
+
+    def register_permission(self, name, description):
+        return dbus.SessionBus().get_object('net.seveas.ubot.helper.users',
+                '/net/seveas/ubot/helper/users').register_permission(name, description)
+
 class UbotResponder(UbotHelper):
     def handle_options(self, opts, args):
         super(UbotResponder, self).handle_options(opts, args)

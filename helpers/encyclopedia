@@ -47,6 +47,7 @@ class EncyclopediaHelper(DjangoHelper, UbotCommander):
         if opts.update_apt:
             self.update_apt()
             sys.exit(0)
+        self.register_permission("facteditor", description="Add/Edit/Delete facts")
 
     def update_apt(self):
         """Run apt-get update for all releases and store all package info in the database"""
@@ -130,7 +131,48 @@ class EncyclopediaHelper(DjangoHelper, UbotCommander):
         if not self.addressed(message):
             return
 
-        msg = message.params[0][1:].strip()
+        msg = message.params[0].strip()
+
+        # Are we editing?
+        if ' is ' in msg or msg.startswith('delete '):
+            user, permissions = self.get_user(message.prefix)
+            if 'facteditor' not in permissions:
+                message.reply("You don't have access to the facts database", private=True)
+                return
+            overwrite = delete = False
+            channel = ''
+            if msg.startswith('no, '):
+                overwrite = True
+                msg = msg[4:].strip()
+            if msg.startswith('delete '):
+                delete = True
+                name = msg[7:].strip()
+            else:
+                name, value = [x.strip() for x in msg.split(' is ', 1)]
+            if '-#' in name:
+                name, channel = name.split('-#')
+                channel = '#' + channel
+
+            try:
+                fact = Factoid.objects.get(name=name, channel=channel)
+                if not (overwrite or delete):
+                    channelmsg = channel and (' for %s' % channel) or ""
+                    message.reply("Factoid %s already exists%s" % (name, channelmsg))
+                    return
+            except Factoid.DoesNotExist:
+                if delete:
+                    channelmsg = channel and (' for %s' % channel) or ""
+                    message.reply("Factoid %s doesn't exists%s" % (name, channelmsg))
+                    return
+                fact = Factoid(name=name, channel=channel)
+
+            if delete:
+                fact.delete()
+            else:
+                fact.value = value
+                fact.save()
+            message.reply("OK, %s." % message.nick)
+            return
 
         # Target detection
         # !foo | nick -> reply in the channel, prefixed with nick
