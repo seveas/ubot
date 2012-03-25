@@ -24,7 +24,7 @@ def control_method(meth):
     def wrapper(request, *args, **kwargs):
         if 'bot' in kwargs:
             bot = get_object_or_404(Bot,name=kwargs['bot'])
-            if not bot.has_access(request.user):
+            if not bot.has_access(request.user, 'webadmin'):
                 return HttpResponseForbidden("No access")
 
         try:
@@ -104,7 +104,7 @@ def index(request):
 
 def bot(request, bot):
     bot = get_object_or_404(Bot, name=bot)
-    if not bot.has_access(request.user):
+    if not bot.has_access(request.user, 'webadmin'):
         return HttpResponseForbidden("No access")
     ctx = RequestContext(request, {'bot': bot})
     return render_to_response('ubot/control/bot.html', context_instance=ctx)

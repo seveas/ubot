@@ -85,9 +85,9 @@ class Ubot(dbus.service.Object):
 
     def clean_prefixes(self):
         """Clean old prefixes from the cache"""
-        cutoff = time.time() - 900
+        cutoff = time.time() - 86400
         for p in self.prefixes.keys():
-            if self.prefixes[p][1] + 900 < cutoff:
+            if self.prefixes[p][1] < cutoff:
                 self.prefixes.pop(p)
         return True
 
@@ -250,6 +250,11 @@ class Ubot(dbus.service.Object):
             'django_settings_module': self.config.django_settings_module,
             'datadir': self.config.datadir,
         }
+
+    @dbus.service.method(dbus_interface='net.seveas.ubot.bot',
+                         in_signature='s', out_signature='s')
+    def get_prefix(self, nick):
+        return self.prefixes.get(ubot.irc.IrcString(nick), [''])[0]
 
     @dbus.service.method(dbus_interface='net.seveas.ubot.bot',
                          in_signature='ss', out_signature='')

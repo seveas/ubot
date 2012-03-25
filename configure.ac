@@ -45,7 +45,8 @@ AC_OUTPUT(Makefile
           data/helpers/p2000/Makefile
           data/helpers/isup/Makefile
           data/helpers/mess/Makefile
-          data/helpers/lart/Makefile)
+          data/helpers/lart/Makefile
+          data/helpers/users/Makefile)
 
 if test "$prefix" != "/usr"; then
     pkgdatadir=$(eval "echo $datarootdir")/ubot

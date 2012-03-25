@@ -23,6 +23,7 @@ Web admin
 
 Helpers
 -------
-* Documentation for agenda and encyclopedia
+* Documentation for agenda, encyclopedia and users
+* Documetn 'ubot send -H -I'
 * Port bugtracker
 * Make lart use a database

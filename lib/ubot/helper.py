@@ -206,9 +206,10 @@ class UbotCommander(UbotResponder):
             if match:
                 msg = match.group(1).lstrip()
             else:
-                return msg.target == self.nickname
+                if message.target != self.nickname:
+                    return False
 
-        message.params[0] == message
+        message.params[0] = msg
 
         # So, prefix was seen
         # Now for the commands

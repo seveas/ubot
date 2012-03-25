@@ -1,0 +1,171 @@
+#!/usr/bin/python
+
+from ubot.helper import UbotCommander, DjangoHelper
+import dbus
+import functools
+import re
+
+def needs_permission(perm):
+    def decorator(func):
+        @functools.wraps(func)
+        def wrapper(self, message, arg):
+            if perm not in self.get_user(message.prefix)[1]:
+                message.reply("Not authorized")
+                return
+            return func(self, message, arg)
+        return wrapper
+    return decorator
+
+class UsersCommander(DjangoHelper, UbotCommander):
+    helper_info = {
+        'name': 'Users',
+        'description': 'Manage users in the django database',
+        'version': "1.0",
+        'url': 'http://ubot.seveas.net/helpers/users',
+        'author_name': 'Dennis Kaarsemaker',
+        'author_nick': 'Seveas',
+        'author_network': 'Freenode/MAGNet',
+        'author_email': 'dennis@kaarsemaker.net',
+    }
+
+    commands = {
+        'adduser':         'adduser',
+        'addmask':         'addmask',
+        'delmask':         'delmask',
+        'listmasks':       'listmasks',
+        'addpermission':   'addpermission',
+        'delpermission':   'delpermission',
+        'listpermissions': 'listpermissions',
+    }
+
+    def handle_options(self, opts, args):
+        super(UsersCommander, self).handle_options(opts, args)
+        global PrefixMask, BotPermission, transaction, User
+        from django.db import transaction
+        from ubot.web.control.models import PrefixMask, BotPermission
+        from django.contrib.auth.models import User
+        self.register_permission("useradmin", description="Manage users via IRC")
+
+    def listmasks(self, message, arg):
+        user = self._get_user(message, arg.strip() or message.nick)
+        if not user:
+            return
+        masks = user.prefixmask_set.values_list('mask', flat=True)
+        message.reply("I know %s as %s" % (arg or message.nick, " ".join(masks)))
+
+    def listpermissions(self, message, arg):
+        user = self._get_user(message, arg.strip() or message.nick)
+        if not user:
+            return
+        permissions = user.userbotpermissions_set.get(bot__name=self.botname).permissions.values_list('name', flat=True)
+        message.reply("Permissions for %s are: %s" % (arg or message.nick, " ".join(permissions)))
+
+    @needs_permission('useradmin')
+    def addpermission(self, message, arg):
+        arg = arg.strip().split()
+        if len(arg) !=2:
+            message.reply("Usage: addpermission nick permission")
+            return
+        user, perm = arg
+        user = self._get_user(message, user)
+        if not user:
+            return
+        try:
+            perm = BotPermission.objects.get(name=perm)
+        except BotPermission.DoesNotExist:
+            message.reply("No such permission: %s" % perm)
+            return
+        user.userbotpermissions_set.get(bot__name=self.botname).permissions.add(perm)
+        message.reply("Gave %s the %s permission" % (user.username, perm.name))
+
+    @needs_permission('useradmin')
+    def delpermission(self, message, arg):
+        arg = arg.strip().split()
+        if len(arg) !=2:
+            message.reply("Usage: delmask nick permission")
+            return
+        user, perm = arg
+        user = self._get_user(message, user)
+        if not user:
+            return
+        try:
+            perm = BotPermission.objects.get(name=perm)
+        except BotPermission.DoesNotExist:
+            message.reply("No such permission: %s" % perm)
+            return
+        user.userbotpermissions_set.get(bot__name=self.botname).permissions.remove(perm)
+        message.reply("Took the %s permission away from %s" % (perm.name, user.username))
+
+    @needs_permission('useradmin')
+    def addmask(self, message, arg):
+        arg = arg.strip().split()
+        if len(arg) !=2:
+            message.reply("Usage: addmask nick mask")
+            return
+        user, mask = arg
+        user = self._get_user(message, user)
+        if not user:
+            return
+        try:
+            re.compile(mask)
+        except re.error:
+            message.reply("Invalid regexp for prefix: %s" % str(e))
+            return
+        PrefixMask(user=user, mask=mask).save()
+        message.reply("Will now identify %s using %s" % (user.username, mask))
+
+    @needs_permission('useradmin')
+    def delmask(self, message, arg):
+        arg = arg.strip().split()
+        if len(arg) !=2:
+            message.reply("Usage: delmask nick mask")
+            return
+        user, mask = arg
+        user = self._get_user(message, user)
+        if not user:
+            return
+        try:
+            PrefixMask.objects.filter(user=user, mask=mask).delete()
+        except PrefixMask.DoesNotExist:
+            pass
+        message.reply("Will no longer identify %s using %s" % (user.username, mask))
+
+    def _get_user(self, message, nick):
+        prefix = self.bot.get_prefix(nick)
+        if not prefix:
+            message.reply("%s doesn't seem to be here or say much" % nick)
+            return
+        with transaction.commit_manually():
+            try:
+                user = PrefixMask.objects.user_for_prefix(prefix)
+            except User.MultipleObjectsReturned:
+                users = PrefixMask.objects.users_for_prefix(prefix).values_list('username', flat=True)
+                message.reply("I'm confused, %s can be identified as multiple people: %s" % (nick, " ".join(users)))
+            except User.DoesNotExist:
+                message.reply("I don't know %s yet" % nick)
+            transaction.rollback()
+            return user
+        
+    @dbus.service.method(dbus_interface="net.seveas.ubot.helper.users",
+                         in_signature="s", out_signature="sas")
+    def get_user(self, prefix):
+        username, permissions = "", []
+        with transaction.commit_manually():
+            try:
+                user = PrefixMask.objects.user_for_prefix(prefix)
+                username = user.username
+                permissions = user.userbotpermissions_set.get(bot__name=self.botname).permissions.values_list('name', flat=True)
+            except User.DoesNotExist:
+                pass
+            transaction.rollback()
+        return (username, permissions)
+
+    @dbus.service.method(dbus_interface="net.seveas.ubot.helper.users",
+                         in_signature="ss")
+    def register_permission(self, name, description):
+        perm, _ = BotPermission.objects.get_or_create(name=name)
+        if perm.description != description:
+            perm.description = description
+            perm.save()
+
+UsersCommander.run()
