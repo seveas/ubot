@@ -21,6 +21,10 @@ def main():
                       help="Specify configfile", metavar="FILE")
     parser.add_option('-C', '--channel', dest='channel', default=None,
                       help="The channel to send a message to")
+    parser.add_option('-H', '--helper', dest='helper', default=None,
+                      help="The helper to send a message to")
+    parser.add_option('-I', '--interface', dest='dbus_interface', default="net.seveas.ubot.helper",
+                      help="The D-BUS interface to use for that message")
     parser.add_option('-v', '--verbose', dest='verbose', action='count', default=0,
                       help='Print all messages. Use twice to see raw messages as well')
     parser.add_option('--reconfigure', dest='reconfigure', action='store_true', default=False,
@@ -87,14 +91,7 @@ def send_message(opts, args):
     try:
         bot = bus.get_object('net.seveas.ubot.' + conf.busname,
                              '/net/seveas/ubot/' + conf.busname)
-        if not opts.channel:
-            print "Calling %s with arguments %s" % (command, unicode(args))
-
-            if command != 'rawmsg':
-                result = getattr(bot, command)(*args, **{'dbus_interface': 'net.seveas.ubot.bot'})
-            else:
-                result = getattr(bot, command)(args[0], args[1:], **{'dbus_interface': 'net.seveas.ubot.bot'})
-        else:
+        if opts.channel:
             channels = bot.get_channels()
             if opts.channel not in channels:
                error("No such channel: %s" % opts.channel)
@@ -102,6 +99,21 @@ def send_message(opts, args):
                                   '/net/seveas/ubot/%s/channel/%s' % (conf.busname, ubot.util.escape_object_path(opts.channel)))
             print "Calling %s in %s with arguments %s" % (command, opts.channel, unicode(args))
             result = getattr(chan, command)(*args, **{'dbus_interface': 'net.seveas.ubot.channel'})
+        elif opts.helper:
+            for service, path in bot.get_helpers():
+                if service.endswith('.' + opts.helper):
+                    helper = bus.get_object(service, path)
+                    print "Calling %s on %s with arguments %s" % (command, service, unicode(args))
+                    result = getattr(helper, command)(*args, **{'dbus_interface': opts.dbus_interface})
+                    break
+            else:
+                error("No such helper: %s" % opts.helper)
+        else:
+            print "Calling %s with arguments %s" % (command, unicode(args))
+            if command != 'rawmsg':
+                result = getattr(bot, command)(*args, **{'dbus_interface': 'net.seveas.ubot.bot'})
+            else:
+                result = getattr(bot, command)(args[0], args[1:], **{'dbus_interface': 'net.seveas.ubot.bot'})
     except TypeError:
         error("Incorrect number of arguments for %s" % command)
     except dbus.exceptions.DBusException, e:
@@ -136,7 +148,7 @@ def start_helpers(opts, helpers):
         bus.StartServiceByName(inactive[helper], dbus.types.UInt32(0))
 
 def undbus(data):
-    if isinstance(data, dbus.Array):
+    if isinstance(data, (dbus.Array, tuple)):
         return [undbus(x) for x in data]
     if isinstance(data, dbus.Dictionary):
         return dict([(undbus(x[0]), undbus(x[1])) for x in data.items()])
