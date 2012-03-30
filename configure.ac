@@ -1,5 +1,5 @@
 AC_PREREQ([2.68])
-AC_INIT([ubot], [1.0], [http://github.com/seveas/ubot])
+AC_INIT([ubot], [0.9], [http://github.com/seveas/ubot])
 AM_INIT_AUTOMAKE
 AM_PATH_PYTHON([2.5])
 AC_PATH_PROG([PERL], [perl])
