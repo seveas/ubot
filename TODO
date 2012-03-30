@@ -17,6 +17,7 @@ Bindings
 * Perl IrcString class
 * Port nick-as-prefix to ruby/perl
 * Port get_user and register_permission to ruby/perl
+* Make database accessible to helpers (get_dsn?)
 
 Web admin
 ---------
@@ -25,11 +26,12 @@ Web admin
 
 Helpers
 -------
-* Documentation for agenda, encyclopedia and users
-* Documetn 'ubot send -H -I'
+* Documentation for agenda, encyclopedia, users and bugtracker
+* Document 'ubot send -H -I'
 * Port bugtracker
 * Make lart use a database
 * Make sure prefix-stripping didn't harm other helpers
 * Web interface to packages/factoids
 * apt-file integration
 * Timezone interface
+* Bugtracker should support jira, and RT (perl/cpan)

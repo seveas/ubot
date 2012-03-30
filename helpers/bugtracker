@@ -1,0 +1,568 @@
+#!/usr/bin/python
+
+import csv
+import email 
+import gdata.projecthosting.client
+from htmlentitydefs import entitydefs as entities
+import json
+import re
+import SOAPpy
+import StringIO
+import sys
+import time
+from ubot.helper import UbotResponder
+from ubot.irc import IrcString as S
+import urllib2
+import urlparse
+import xml.dom.minidom as minidom
+
+matches = {
+        'bug': r'''\b
+                   (?:(?P<tracker>[a-z0-9.]+)\s+)?
+                   bugs?
+                   \s+
+                   (?P<bug>
+                     \#?\d+(?!\d*\.\d+)
+                     (?:
+                         (?:\s*,\s*|\s+(?:and|en|et|und|ir|y)\s+)
+                         \#?\d+(?!\d*\.\d+)
+                     )*
+                   )''',
+        'bugurl': r'''(?P<tracker>https?://\S*?)
+                      /
+                      (?:Bugs/0*|str.php\?L|show_bug.cgi\?id=|bugreport.cgi\?bug=|(?:bugs|\+bug)/|ticket/|tracker/|\S*aid=|issue(s/)?|pull/?|detail\?id=|)
+                      (?P<bug>\d+)
+                      (?P<sfurl>&group_id=\d+&at_id=\d+)?''',
+        'cve': r''' (?P<bug>
+                     (?P<tracker>cve)[- ]\d{4}[- ]\d{4}
+                     (?:
+                         (?:\s*,\s*|\s+(?:and|en|et|und|ir|y)\s+)
+                         cve[- ]\d{4}[- ]\d{4}
+                     )*
+                   )''',
+        'cveurl': r'(?P<tracker>http://cve.mitre.org)/cgi-bin/cvename.cgi?name=(?P<bug>cve[- ]\d{4}[- ]\d{4})',
+        'nvdurl': r'http://nvd.nist.gov/nvd.cfm?(?P<tracker>cve)name=(?P<bug>cve[- ]\d{4}[- ]\d{4})',
+}
+for m in matches:
+    matches[m] = re.compile(matches[m], re.I|re.VERBOSE)
+bugsplitter = re.compile('and|en|et|und|ir|y|,',re.I)
+
+# The plugin
+class BugtrackerResponder(UbotResponder):
+    helper_info = {
+        'name': 'Bugtracker',
+        'description': 'Listen for bug numbers/urls and give info about the bugs',
+        'version': "1.0",
+        'url': 'http://ubot.seveas.net/helpers/bugtracker',
+        'author_name': 'Dennis Kaarsemaker',
+        'author_nick': 'Seveas',
+        'author_network': 'Freenode/MAGNet',
+        'author_email': 'dennis@kaarsemaker.net',
+    }
+    def handle_options(self, options, args):
+        super(BugtrackerResponder, self).handle_options(options, args)
+        self.seen = {}
+        self.trackers = _builtin_trackers
+        self.default_tracker = self.conf.get(self.name, 'default_tracker')
+        self.channel_config = {}
+        self.repeat_delay = self.conf.getint(self.name, 'repeat_delay')
+
+        # Read all trackers
+        for s in self.conf.sections():
+            if s.startswith('#'):
+                self.channel_config[s] = {'default_tracker': self.conf.get(s, 'default_tracker')}
+            elif self.conf.has_option(s, 'type'):
+                self.trackers[s] = Bugtracker.from_config(self.conf, s)
+
+    def in_privmsg(self, message):
+        if not self.addressed(message):
+            return
+        for b in message.bugs[:5]:
+            while b:
+                try:
+                    self.info("%s wants to see %s bug %s in %s" % (message.prefix, b.tracker.description, str(b.id), message.target))
+                    b.fetch()
+                except BugtrackerError, e:
+                    self.info(str(e))
+                    message.reply(str(e), slow=True)
+                except Exception, e:
+                    self.error("Uncaught exception while fetching %s/%s: %s" % (b.tracker.description, str(b.id), str(e)))
+                else:
+                    reply = unicode(b)
+                    self.info(reply)
+                    if message.target == self.nickname:
+                        message.reply(reply, slow=True)
+                    now = time.time()
+                    for s in self.seen.keys():
+                        if self.seen[s] + self.repeat_delay < now:
+                            del self.seen[s]
+                    if (message.target, reply) not in self.seen:
+                        self.seen[(message.target,reply)] = now
+                    message.reply(reply)
+                b = b.dup_of
+
+    def addressed(self, message):
+        if not super(BugtrackerResponder, self).addressed(message):
+            return False
+        bugs = []
+        msg = message.params[0]
+        while True:
+            for m in matches:
+                match = matches[m].search(msg)
+                if match:
+                    # Find me a tracker
+                    tracker = match.group('tracker')
+                    if tracker and 'cve' in tracker.lower():
+                        tracker = self.trackers['cve']
+                    elif tracker:
+                        for t in self.trackers.itervalues():
+                            if t.name == tracker or t.url in tracker:
+                                tracker = t
+                                break
+                        else:
+                            tracker = None
+                    if not tracker and message.target in self.channel_config:
+                        tracker = self.trackers[self.conf.get(message.target, 'default_tracker')]
+                    if not tracker:
+                        tracker = self.trackers[self.conf.get(self.name, 'default_tracker')]
+
+                    # Find me some bugs!
+                    ids = match.group('bug')
+                    for i in bugsplitter.split(ids):
+                        i = i.strip()
+                        try:
+                            i = int(i)
+                        except:
+                            pass
+                        bugs.append(BugReport(tracker, i, show_url='url' not in m))
+
+                    msg = msg[:match.start()] + msg[match.end()+1:]
+                    break
+            else:
+                break
+        message.bugs = bugs
+        return bool(message.bugs)
+
+class BugReport(object):
+    def __init__(self, tracker, id, show_url):
+        self.tracker   = tracker
+        self.id        = id
+        self.show_url  = show_url
+        self.url       = ''
+        self.title     = ''
+        self.component = ''
+        self.severity  = ''
+        self.status    = ''
+        self.assignee  = ''
+        self.dup_of    = None
+
+    def __unicode__(self):
+        url = self.show_url and self.url or ''
+        url = self.dup_of and ("(Duplicate of #%d)" % self.dup_of.id) or url
+        # For CVE's only show the title
+        if type(self.tracker) == CVE:
+            return 'CVE %s: "%s" %s' % (self.id, self.title, url)
+        if self.component:
+            return u'%s bug %d in %s: "%s" [%s,%s] %s' % (self.tracker.description, self.id, self.component,
+                                                         self.title, self.severity.title(), self.status.title(), url)
+        return u'%s bug %d: "%s" [%s,%s] %s' % (self.tracker.description, self.id, self.title,
+                                               self.severity.title(), self.status.title(), url)
+
+    def __repr__(self):
+        return "<%s bugreport %s>" % (self.tracker.description, str(self.id))
+
+    def fetch(self):
+        self.tracker.fetch(self)
+
+# Here come the bugtrackers
+class Bugtracker(object):
+    def __init__(self, name, url, description):
+        self.name, self.url, self.description = name, url, description
+
+    @classmethod
+    def from_config(self, conf, name):
+        ttype = conf.get(name, 'type')
+        klass = getattr(sys.modules[self.__module__], ttype)
+        return klass(name.lower(), conf.get(name, 'url').lower(), conf.get(name, 'description').lower())
+
+    def __str__(self):
+        return self.name
+    
+    def __repr__(self):
+        return '<%s tracker %s at %s>' % (self.__class__.__name__, self.description, self.url)
+
+class Launchpad(Bugtracker):
+    def _parse(self, data):
+        parser = email.FeedParser.FeedParser()
+        parser.feed(data)
+        return parser.close()
+
+    def _sort(self, task1, task2): 
+        # Status sort: 
+        try:
+            statuses   = ['Rejected', 'Fix Released', 'Fix Committed', 'Unconfirmed','Needs Info','Confirmed','In Progress']
+            severities = ['Undecided', 'Wishlist', 'Minor', 'Low', 'Normal', 'Medium', 'Major', 'High', 'Critical']
+            if task1['status'] not in statuses and task2['status'] in statuses: return -1
+            if task1['status'] in statuses and task2['status'] not in statuses: return 1
+            if task1['importance'] not in severities and task2['importance'] in severities: return -1
+            if task1['importance'] in severities and task2['importance'] not in severities: return 1
+            if not (task1['status'] == task2['status']):
+                if statuses.index(task1['status']) < statuses.index(task2['status']):
+                    return -1
+                return 1
+            if not (task1['importance'] == task2['importance']):
+                if severities.index(task1['importance']) < severities.index(task2['importance']):
+                    return -1
+                return 1
+        except: # Launchpad changed again?
+            return 0
+        return 0
+
+    def fetch(self, bug):
+        bug.url = "%s/bugs/%d" % (self.url, bug.id)
+        try:
+            bugdata = fetch(bug.url + '/+text')
+        except Exception, e:
+            if '404' in str(e): 
+                raise BugNotFoundError(bug)
+            raise BugtrackerError(bug, str(e))
+
+        # Trap private bugs
+        if "<!-- 4a. didn't try to log in last time: -->" in bugdata:
+            raise BugtrackerError(bug, "This bug is private")
+        try:
+            # Split bug data into separate pieces (bug data, task data)
+            data = []
+            while True:
+                d, bugdata = bugdata.split('\n\n',1)
+                if d.startswith('bug') or d.startswith('task'):
+                    data.append(self._parse(d))
+                else:
+                    break
+            bugdata  = data[0]
+            taskdata = data[1:]
+            taskdata.sort(self._sort)
+            ntasks   = len(taskdata)
+            taskdata = taskdata[-1]
+
+        except Exception, e:
+            raise BugtrackerError(bug, str(e))
+
+        bug.title = bugdata['title']
+        t = taskdata['task']
+        if '(' in t:
+            t = t[:t.rfind('(') -1]
+        bug.component = t
+        if ntasks > 1:
+            bug.component += ' (and %d others)' % (ntasks-1)
+        bug.severity = taskdata['importance']
+        bug.status = taskdata['status']
+        bug.assignee = taskdata['assignee']
+
+        if bugdata['duplicate-of']:
+            bug.dup_of = BugReport(self, int(bugdata['duplicate-of']), bug.show_url)
+            bug.dup_of.fetch()
+
+#FIXME detect dups and do the same as for launchpad
+class Bugzilla(Bugtracker):
+    def fetch(self, bug):
+        url = "%s/xml.cgi?id=%d" % (self.url, bug.id)
+        bug.url = "%s/show_bug.cgi?id=%d" % (self.url, bug.id)
+        try:
+            bugxml = fetch(url)
+            dom = minidom.parseString(bugxml)
+        except Exception, e:
+            raise BugtrackerError(bug, str(e))
+        bug_n = dom.getElementsByTagName('bug')[0]
+        if bug_n.hasAttribute('error'):
+            errtxt = bug_n.getAttribute('error')
+            if errtxt == 'NotFound':
+                raise BugNotFoundError(bug)
+            raise BugtrackerError(bug, errtxt)
+        try:
+            bug.title = getnodetxt(bug_n.getElementsByTagName('short_desc')[0])
+            bug.status = getnodetxt(bug_n.getElementsByTagName('bug_status')[0])
+            try:
+                bug.status += ": " + getnodetxt(bug_n.getElementsByTagName('resolution')[0])
+            except:
+                pass
+            bug.component = getnodetxt(bug_n.getElementsByTagName('component')[0])
+            bug.severity = getnodetxt(bug_n.getElementsByTagName('bug_severity')[0])
+            try:
+                bug.assignee = getnodetxt(bug_n.getElementsByTagName('assigned_to')[0])
+            except:
+                pass
+        except Exception, e:
+            raise BugtrackerError(bug, 'Could not parse XML: ' + str(e))
+
+class Debbugs(Bugtracker):
+    def __init__(self, *args, **kwargs):
+        super(Debbugs, self).__init__(*args, **kwargs)
+        self.soap_proxy = SOAPpy.SOAPProxy("bugs.debian.org/cgi-bin/soap.cgi", "Debbugs/SOAP/Status")
+        self.soap_proxy.soapaction = "Debbugs/SOAP/Status#get_status"
+
+    def fetch(self, bug):
+        try:
+            raw = self.soap_proxy.get_status(bug.id)
+        except Exception, e:
+            raise BugtrackerError(bug, str(e))
+        if not raw:
+            raise BugNotFoundError(bug)
+        raw = raw['item']['value']
+        try:
+            if len(raw['fixed_versions']):
+                bug.status = 'Fixed'
+            else:
+                bug.status = 'Open'
+            bug.url = '%s/%d' % (self.url, bug.id)
+            bug.title = raw['subject']
+            bug.component = raw['package']
+            bug.severity = raw['severity']
+        except Exception, e:
+            raise BugtrackerError(bug, str(e))
+
+class Trac(Bugtracker):
+    def fetch(self, bug):
+        bug.url = "%s/ticket/%d" % (self.url, bug.id)
+        try:
+            bugdata = fetch(bug.url + '?format=csv')
+        except Exception, e:
+            # Hacketiehack
+            if 'HTTP Error 500' in str(e):
+                raise BugNotFoundError(bug)
+            raise BugtrackerError(bug, str(e))
+        bugdata = csv.DictReader(StringIO.StringIO(bugdata)).next()
+        bug.title = bugdata['summary']
+        bug.status = ('%s %s' % (bugdata['status'], bugdata['resolution'])).strip()
+        bug.severity = '%s %s' % (bugdata['severity'], bugdata['type'])
+        bug.component = bugdata['component']
+        bug.assignee = bugdata['owner']
+
+class Sourceforge(Bugtracker):
+    sfre = re.compile(r"""
+                      .*?
+                      <h2>\[.*?\]\s*(?P<title>.*?)</h2>
+                      .*?
+                      assigned.*?<br>\s+(?P<assignee>\S+)
+                      .*?
+                      priority.*?(?P<priority>\d+)
+                      .*?
+                      status.*?<br>\s+(?P<status>\S+)
+                      .*?
+                      resolution.*?<br>\s+(?P<resolution>\S+)
+                      .*?
+                      """, re.VERBOSE | re.DOTALL | re.I)
+    sf_url = 'http://sf.net/support/tracker.php?aid=%d'
+    def fetch(self, bug):
+        bug.url = self.sf_url % bug.id
+        try:
+            bugdata = fetch(bug.url)
+        except Exception, e:
+            raise BugtrackerError(str(e))
+        try:
+            reo = self.sfre.search(bugdata)
+            bug.status = reo.group('status')
+            resolution = reo.group('resolution')
+            if resolution.lower() != 'none':
+                bug.status += ' ' + resolution
+            bug.title = reo.group('title')
+            bug.severity = "Pri: %s" % reo.group('priority')
+            bug.assignee = reo.group('assignee')
+        except:
+            raise BugNotFoundError(bug)
+
+class Str(Bugtracker):
+    def fetch(self, bug):
+        bug.url = "%s/str.php?L%d" % (self.url, bug.id)
+        try:
+            bugdata = fetch(bug.url)
+        except Exception, e:
+            raise BugtrackerError(bug, str(e))
+        for l in bugdata.split("\n"):
+            l2 = l.lower()
+            if 'nowrap>priority:</th>' in l2:
+                bug.severity = 'Priority ' + l[l.find(' - ')+3:min(l.find(','),l.find('</td>'))]
+            if '>application:</th>' in l2:
+                bug.component = l[l.find('<td>')+4:l.find('</td>')]
+            if 'nowrap>status:</th>' in l2:
+                bug.status = l[l.find(' - ')+3:l.find('</td>')]
+            if 'nowrap>summary:</th>' in l2:
+                bug.title = decode_entities(l[l.find('<td>')+4:l.find('</td>')])
+            if 'nowrap>assigned to:</th>' in l2:
+                bug.assignee = strip_tags(l[l.find('<td>')+4:l.find('</td>')])
+                if bug.assignee == 'Unassigned':
+                    bug.assignee = None
+
+class CVE(Bugtracker):
+    cvere = re.compile(r'<th.*?Description.*?<td.*?>(?P<description>.*?)\s*</td>', re.I | re.DOTALL)
+    def fetch(self, bug):
+        bug.id = bug.id.replace(' ','-').upper()
+        bug.url = 'http://cve.mitre.org/cgi-bin/cvename.cgi?name=%s' % bug.id
+        cvedata = fetch(bug.url)
+        m = self.cvere.search(cvedata)
+        if not m:
+            raise BugNotFoundError(bug)
+        bug.title = m.group('description').replace('\n',' ')
+        if len(bug.title) > 100:
+            bug.title = bug.title[:bug.title.find(' ', 100)] + '...' 
+
+class GitHub(Bugtracker):
+    def __init__(self, *args, **kwargs):
+        super(GitHub, self).__init__(*args, **kwargs)
+        self.user, self.repo = urlparse.urlparse(self.url).path.split('/')[1:3]
+    def fetch(self, bug):
+        bug.url = '%s/issues/%s' % (self.url, bug.id)
+        bug.apiurl = 'http://github.com/api/v2/json/issues/show/%s/%s/%s' % (self.user, self.repo, bug.id)
+        bugdata = json.loads(fetch(bug.apiurl))['issue']
+        bug.status = bugdata['state']
+        bug.title = bugdata['title']
+        bug.severity = 'Issue'
+        if 'pull_request_url' in bugdata:
+            bug.severity = 'Pull request'
+            bug.url = bugdata['pull_request_url']
+
+class Roundup(Bugtracker):
+    roundup_re = re.compile(r"""
+                            <span>(?P<title>.*?)</span>.*?
+                            Type</a>.*?
+                            <td>(?P<type>.*?)</td>.*?
+                            Components</a>.*?
+                            <td>(?P<component>.*?)</td>.*?
+                            Status</a>.*?
+                            <td>(?P<status>.*?)</td>.*?
+                            Resolution</a>.*?
+                            <td>(?P<resolution>.*?)</td>.*?
+                            Assigned\s*To.*?</a>.*?
+                            <td>(?P<assignee>.*?)</td>.*?
+                            Priority</a>.*?
+                            <td>(?P<priority>.*?)</td>
+                            """, re.I | re.DOTALL | re.VERBOSE)
+
+    def fetch(self, bug):
+        bug.url = "%s/issue%d" % (self.url, bug.id)
+        try:
+            bugdata = fetch(bug.url)
+        except Exception, e:
+            if 'HTTP Error 400' in str(e):
+                raise BugNotFoundError(bug)
+            raise BugtrackerError(bug, str(e))
+        reo = self.roundup_re.search(bugdata)
+        bug.assignee = reo.group('assignee').strip()
+        bug.title = reo.group('title')
+        bug.status = reo.group('status')
+        if reo.group('resolution'):
+            bug.status += ': ' + reo.group('resolution')
+        bug.severity = reo.group('type')
+        if reo.group('priority'):
+            bug.severity += '/' + reo.group('priority')
+            if bug.severity.startswith('/'):
+                bug.severity = bug.severity[1:]
+        bug.component = reo.group('component')
+
+class GoogleCode(Bugtracker):
+    def __init__(self, *args, **kwargs):
+        super(GoogleCode, self).__init__(*args, **kwargs)
+        self.project = urlparse.urlparse(self.url).path.split('/')[-2]
+
+    def fetch(self, bug):
+        bug.url = "%s/detail?id=%d" % (self.url, bug.id)
+        client = gdata.projecthosting.client.ProjectHostingClient()
+        query = gdata.projecthosting.client.Query(issue_id=bug.id)
+        issues = client.get_issues(self.project, query=query)
+        issue = issues.entry[0]
+  
+        bug.title = issue.title.text
+        bug.status = issue.status.text
+        bug.severity = issue.state.text
+        bug.assignee = issue.owner.text
+
+class BugtrackerError(Exception):
+    def __init__(self, bug, errtxt=None):
+        if errtxt:
+            super(BugtrackerError, self).__init__("Error getting %s bug #%s: %s" % (bug.tracker.description, bug.id, errtxt))
+        else:
+            super(BugtrackerError, self).__init__("Error getting %s bug #%s" % (bug.tracker.description, bug.id)) 
+
+class BugNotFoundError(BugtrackerError):
+    def __init__(self, bug):
+        super(BugNotFoundError, self).__init__(bug, "bug not found")
+
+entre = re.compile('&(\S*?);')
+def getnodetxt(node):
+    L = []  
+    for childnode in node.childNodes:
+        if childnode.nodeType == childnode.TEXT_NODE:
+            L.append(childnode.data)
+    val = ''.join(L)
+    if node.hasAttribute('encoding'):
+        encoding = node.getAttribute('encoding')
+        if encoding == 'base64':
+            try:
+                val = val.decode('base64')
+            except:
+                val = 'Cannot convert bug data from base64.'
+    return decode_entities(val)
+
+def decode_entities(val):
+    while entre.search(val):
+        entity = entre.search(val).group(1)
+        if entity in entities:
+            val = entre.sub(entities[entity], val)
+        elif entity.startswith('#') and entity[1:].isdigit():
+            val = entre.sub(chr(int(entity[1:])), val)
+        else:
+            val = entre.sub('?', val)
+    return val
+
+def fetch(url):
+    fd = urllib2.urlopen(url)
+    data = fd.read()
+    fd.close()
+    return data
+
+def strip_tags(s):
+    while '<' in s and '>' in s:
+        s = str(s[:s.find('<')]) + str(s[s.find('>')+1:])
+    return s
+
+_builtin_trackers = {
+    'apache':         Bugzilla('apache', 'http://issues.apache.org/bugzilla', 'Apache'),
+    'clamav':         Bugzilla('clamav', 'https://bugzilla.clamav.net', 'ClamAV'),
+    'clamav2':        Bugzilla('clamav', 'https://bugs.clamav.net', 'ClamAV'),
+    'cups':           Str('cups', 'http://www.cups.org', 'CUPS'),
+    'cve':            CVE('cve', 'http://cve.mitre.org/', 'CVE'),
+    'debian':         Debbugs('debian', 'http://bugs.debian.org', 'Debian'),
+    'django':         Trac('django', 'https://code.djangoproject.com', 'Django'),
+    'freedesktop':    Bugzilla('freedesktop', 'http://bugzilla.freedesktop.org', 'FreeDesktop'),
+    'freedesktop2':   Bugzilla('freedesktop', 'http://bugs.freedesktop.org', 'FreeDesktop'),
+    'gcc':            Bugzilla('gcc', 'http://gcc.gnu.org/bugzilla', 'gcc'),
+    # No xml.cgi
+    # 'gentoo':         Bugzilla('gentoo', 'https://bugs.gentoo.org', 'Gentoo'), 
+    'ghostscript':    Bugzilla('ghostscript', 'http://bugs.ghostscript.com', 'GhostScript'),
+    'gnome':          Bugzilla('gnome', 'http://bugzilla.gnome.org', 'Gnome'),
+    'gnome2':         Bugzilla('gnome', 'http://bugs.gnome.org', 'Gnome'),
+    'go':             GoogleCode('go', 'http://code.google.com/p/go/issues', 'go'),
+    'kde':            Bugzilla('kde', 'http://bugs.kde.org', 'KDE'),
+    'launchpad':      Launchpad('launchpad', 'https://bugs.launchpad.net', 'Launchpad'),
+    'llvm':           Bugzilla('llvm', 'http://llvm.org/bugs', 'LLVM'),
+    'mandriva':       Bugzilla('mandriva', 'http://qa.mandriva.com', 'Mandriva'),
+    'mozdev':         Bugzilla('mozdev', 'https://www.mozdev.org/bugs', 'MozDev'),
+    'mozilla':        Bugzilla('mozilla', 'http://bugzilla.mozilla.org', 'Mozilla'),
+    'novell':         Bugzilla('novell', 'http://bugzilla.novell.com', 'Novell'),
+    'openoffice':     Bugzilla('openoffice', 'http://issues.apache.org/ooo', 'OpenOffice.org'),
+    'openoffice.org': Bugzilla('openoffice.org', 'http://issues.apache.org/ooo', 'OpenOffice.org'),
+    'python':         Roundup('python', 'http://bugs.python.org', 'Python'),
+    'redhat':         Bugzilla('redhat', 'https://bugzilla.redhat.com/bugzilla', 'Red Hat'),
+    'sourceware':     Bugzilla('sourceware', 'http://sourceware.org/bugzilla', 'Sourceware'),
+    'spamassassin':   Bugzilla('spamassassin', 'http://issues.apache.org/SpamAssassin', 'SpamAssassin'),
+    'squid':          Bugzilla('squid', 'http://bugs.squid-cache.org', 'Squid'),
+    'trac':           Trac('trac', 'http://trac.edgewall.org', 'Trac'),
+    'ubot':           GitHub('ubot', 'https://github.com/seveas/ubot', u'\u00b5bot'),
+    'ubuntu':         Launchpad('ubuntu', 'https://bugs.launchpad.net', 'Ubuntu'),
+    'w3c':            Bugzilla('w3c', 'http://www.w3.org/Bugs/Public', 'W3C'),
+    'wine':           Bugzilla('wine', 'http://bugs.winehq.org', 'Wine'),
+    # No xml.cgi
+    # 'xfce':           Bugzilla('xfce', 'https://bugzilla.xfce.org', 'XFCE'),
+}
+
+BugtrackerResponder.run()

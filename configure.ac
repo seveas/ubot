@@ -39,6 +39,7 @@ AC_OUTPUT(Makefile
           data/Makefile
           data/helpers/Makefile
           data/helpers/agenda/Makefile
+          data/helpers/bugtracker/Makefile
           data/helpers/encyclopedia/Makefile
           data/helpers/noroot/Makefile
           data/helpers/pmrelay/Makefile
